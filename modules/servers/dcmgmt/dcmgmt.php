@@ -1,34 +1,9 @@
 <?php
 /**
- * WHMCS SDK Sample Provisioning Module
- *
- * Provisioning Modules, also referred to as Product or Server Modules, allow
- * you to create modules that allow for the provisioning and management of
- * products and services in WHMCS.
- *
- * This sample file demonstrates how a provisioning module for WHMCS should be
- * structured and exercises all supported functionality.
- *
- * Provisioning Modules are stored in the /modules/servers/ directory. The
- * module name you choose must be unique, and should be all lowercase,
- * containing only letters & numbers, always starting with a letter.
- *
- * Within the module itself, all functions must be prefixed with the module
- * filename, followed by an underscore, and then the function name. For this
- * example file, the filename is "provisioningmodule" and therefore all
- * functions begin "provisioningmodule_".
- *
- * If your module or third party API does not support a given function, you
- * should not define that function within your module. Only the _ConfigOptions
- * function is required.
- *
- * For more information, please refer to the online documentation.
- *
- * @see http://docs.whmcs.com/Provisioning_Module_Developer_Docs
- *
- * @copyright Copyright (c) WHMCS Limited 2015
- * @license http://www.whmcs.com/license/ WHMCS Eula
- */
+Version 0.1
+- initial release
+
+**/
 
 if (!defined("WHMCS")) {
     die("This file cannot be accessed directly");
@@ -86,47 +61,10 @@ function dcmgmt_MetaData()
 function dcmgmt_ConfigOptions()
 {
     return array(
-        // a text field type allows for single line text input
-        'Text Field' => array(
-            'Type' => 'text',
-            'Size' => '25',
-            'Default' => '1024',
-            'Description' => 'Enter in megabytes',
-        ),
-        // a password field type allows for masked text input
-        'Password Field' => array(
-            'Type' => 'password',
-            'Size' => '25',
-            'Default' => '',
-            'Description' => 'Enter secret value here',
-        ),
-        // the yesno field type displays a single checkbox option
-        'Checkbox Field' => array(
-            'Type' => 'yesno',
-            'Description' => 'Tick to enable',
-        ),
-        // the dropdown field type renders a select menu of options
-        'Dropdown Field' => array(
-            'Type' => 'dropdown',
-            'Options' => array(
-                'option1' => 'Display Value 1',
-                'option2' => 'Second Option',
-                'option3' => 'Another Option',
-            ),
-            'Description' => 'Choose one',
-        ),
-        // the radio field type displays a series of radio button options
-        'Radio Field' => array(
-            'Type' => 'radio',
-            'Options' => 'First Option,Second Option,Third Option',
-            'Description' => 'Choose your option!',
-        ),
-        // the textarea field type allows for multi-line text input
-        'Textarea Field' => array(
-            'Type' => 'textarea',
-            'Rows' => '3',
-            'Cols' => '60',
-            'Description' => 'Freeform multi-line text input field',
+        'Suspend type' => array(
+                'Type' => 'radio',
+                'Options' => 'Null-route ip address,Disable network port',
+                'Description' => 'What happens when customer service need to suspend:',
         ),
     );
 }
@@ -197,23 +135,41 @@ function dcmgmt_CreateAccount(array $params)
  */
 function dcmgmt_SuspendAccount(array $params)
 {
-    try {
-        // Call the service's suspend function, using the values provided by
-        // WHMCS in `$params`.
-    } catch (Exception $e) {
-        // Record the error in WHMCS's module log.
-        logModuleCall(
-            'provisioningmodule',
-            __FUNCTION__,
-            $params,
-            $e->getMessage(),
-            $e->getTraceAsString()
-        );
-
-        return $e->getMessage();
-    }
-
-    return 'success';
+	try {
+		// Call the service's suspend function, using the values provided by
+		// WHMCS in `$params`.
+		var_dump($params);
+		switch($params['configoption1']) {
+			case 'Null-route ip address': {
+				if(!preg_match("/^(\d)\.(\d)\.(\d)\.(\d)$/", $params['customfields']['customerip'])) {
+					throw new exception("ERROR: empty customerip");
+				}
+				$output = shell_exec("python ".__FILE__."/lib/gateway.py --routerip=".$params['serverip']." --action=suspend --type=nullroute --customerip=".$params['customfields']['customerip']);
+				break;
+			}
+			case 'Disable network port': {
+				if(!preg_match("/^(gi|vlan)(/?\d+)+$/", $params['customfields']['interface'])) {
+					throw new exception("ERROR: empty interface");
+				}
+				$output = shell_exec("python ".__FILE__."/lib/gateway.py --routerip=".$params['serverip']." --action=suspend --type=shutdownport --interface=".$params['customfields']['interface']);
+				break;
+			}
+		}
+		if(!preg_match("/OK/", $output)) {
+			throw new exception("ERROR from backend: $output");
+		}
+	} catch (Exception $e) {
+		// Record the error in WHMCS's module log.
+		logModuleCall(
+			'provisioningmodule',
+			__FUNCTION__,
+			$params,
+			$e->getMessage(),
+			$e->getTraceAsString()
+		);
+		return $e->getMessage();
+	}
+	return 'success';
 }
 
 /**
@@ -231,23 +187,41 @@ function dcmgmt_SuspendAccount(array $params)
  */
 function dcmgmt_UnsuspendAccount(array $params)
 {
-    try {
-        // Call the service's unsuspend function, using the values provided by
-        // WHMCS in `$params`.
-    } catch (Exception $e) {
-        // Record the error in WHMCS's module log.
-        logModuleCall(
-            'provisioningmodule',
-            __FUNCTION__,
-            $params,
-            $e->getMessage(),
-            $e->getTraceAsString()
-        );
-
-        return $e->getMessage();
-    }
-
-    return 'success';
+	try {
+		// Call the service's unsuspend function, using the values provided by
+		// WHMCS in `$params`.
+		var_dump($params);
+		switch($params['configoption1']) {
+			case 'Null-route ip address': {
+				if(!preg_match("/^(\d)\.(\d)\.(\d)\.(\d)$/", $params['customfields']['customerip'])) {
+					throw new exception("ERROR: empty customerip");
+				}
+				$output = shell_exec("python ".__FILE__."/lib/gateway.py --routerip=".$params['serverip']." --action=unsuspend --type=nullroute --customerip=".$params['customfields']['customerip']);
+				break;
+			}
+			case 'Disable network port': {
+				if(!preg_match("/^(gi|vlan)(/?\d+)+$/", $params['customfields']['interface'])) {
+					throw new exception("ERROR: empty interface");
+				}
+				$output = shell_exec("python ".__FILE__."/lib/gateway.py --routerip=".$params['serverip']." --action=unsuspend --type=shutdownport --interface=".$params['customfields']['interface']);
+				break;
+			}
+		}
+		if(!preg_match("/OK/", $output)) {
+			throw new exception("ERROR from backend: $output");
+		}
+	} catch (Exception $e) {
+		// Record the error in WHMCS's module log.
+		logModuleCall(
+			'provisioningmodule',
+			__FUNCTION__,
+			$params,
+			$e->getMessage(),
+			$e->getTraceAsString()
+		);
+		return $e->getMessage();
+	}
+	return 'success';
 }
 
 /**
@@ -432,10 +406,7 @@ function dcmgmt_TestConnection(array $params)
  */
 function dcmgmt_AdminCustomButtonArray()
 {
-    return array(
-        "Button 1 Display Value" => "buttonOneFunction",
-        "Button 2 Display Value" => "buttonTwoFunction",
-    );
+	return array();
 }
 
 /**
@@ -451,82 +422,7 @@ function dcmgmt_AdminCustomButtonArray()
  */
 function dcmgmt_ClientAreaCustomButtonArray()
 {
-    return array(
-        "Action 1 Display Value" => "actionOneFunction",
-        "Action 2 Display Value" => "actionTwoFunction",
-    );
-}
-
-/**
- * Custom function for performing an additional action.
- *
- * You can define an unlimited number of custom functions in this way.
- *
- * Similar to all other module call functions, they should either return
- * 'success' or an error message to be displayed.
- *
- * @param array $params common module parameters
- *
- * @see http://docs.whmcs.com/Provisioning_Module_SDK_Parameters
- * @see provisioningmodule_AdminCustomButtonArray()
- *
- * @return string "success" or an error message
- */
-function dcmgmt_buttonOneFunction(array $params)
-{
-    try {
-        // Call the service's function, using the values provided by WHMCS in
-        // `$params`.
-    } catch (Exception $e) {
-        // Record the error in WHMCS's module log.
-        logModuleCall(
-            'provisioningmodule',
-            __FUNCTION__,
-            $params,
-            $e->getMessage(),
-            $e->getTraceAsString()
-        );
-
-        return $e->getMessage();
-    }
-
-    return 'success';
-}
-
-/**
- * Custom function for performing an additional action.
- *
- * You can define an unlimited number of custom functions in this way.
- *
- * Similar to all other module call functions, they should either return
- * 'success' or an error message to be displayed.
- *
- * @param array $params common module parameters
- *
- * @see http://docs.whmcs.com/Provisioning_Module_SDK_Parameters
- * @see provisioningmodule_ClientAreaCustomButtonArray()
- *
- * @return string "success" or an error message
- */
-function dcmgmt_actionOneFunction(array $params)
-{
-    try {
-        // Call the service's function, using the values provided by WHMCS in
-        // `$params`.
-    } catch (Exception $e) {
-        // Record the error in WHMCS's module log.
-        logModuleCall(
-            'provisioningmodule',
-            __FUNCTION__,
-            $params,
-            $e->getMessage(),
-            $e->getTraceAsString()
-        );
-
-        return $e->getMessage();
-    }
-
-    return 'success';
+    return array();
 }
 
 /**
@@ -550,18 +446,7 @@ function dcmgmt_AdminServicesTabFields(array $params)
     try {
         // Call the service's function, using the values provided by WHMCS in
         // `$params`.
-        $response = array();
-
-        // Return an array based on the function's response.
-        return array(
-            'Number of Apples' => (int) $response['numApples'],
-            'Number of Oranges' => (int) $response['numOranges'],
-            'Last Access Date' => date("Y-m-d H:i:s", $response['lastLoginTimestamp']),
-            'Something Editable' => '<input type="hidden" name="provisioningmodule_original_uniquefieldname" '
-                . 'value="' . htmlspecialchars($response['textvalue']) . '" />'
-                . '<input type="text" name="provisioningmodule_uniquefieldname"'
-                . 'value="' . htmlspecialchars($response['textvalue']) . '" />',
-        );
+        return array();
     } catch (Exception $e) {
         // Record the error in WHMCS's module log.
         logModuleCall(
@@ -743,6 +628,7 @@ function dcmgmt_ClientArea(array $params)
 {
     // Determine the requested action and set service call parameters based on
     // the action.
+    /*
     $requestedAction = isset($_REQUEST['customAction']) ? $_REQUEST['customAction'] : '';
 
     if ($requestedAction == 'manage') {
@@ -786,4 +672,5 @@ function dcmgmt_ClientArea(array $params)
             ),
         );
     }
+    */
 }
