@@ -49,12 +49,12 @@ if (!defined("WHMCS")) {
  *
  * @return array
  */
-function provisioningmodule_MetaData()
+function dcmgmt_MetaData()
 {
     return array(
-        'DisplayName' => 'Demo Provisioning Module',
+        'DisplayName' => 'Datacenter Management',
         'APIVersion' => '1.1', // Use API Version 1.1
-        'RequiresServer' => true, // Set true if module requires a server to work
+        'RequiresServer' => false, // Set true if module requires a server to work
         'DefaultNonSSLPort' => '1111', // Default Non-SSL Connection Port
         'DefaultSSLPort' => '1112', // Default SSL Connection Port
         'ServiceSingleSignOnLabel' => 'Login to Panel as User',
@@ -83,7 +83,7 @@ function provisioningmodule_MetaData()
  *
  * @return array
  */
-function provisioningmodule_ConfigOptions()
+function dcmgmt_ConfigOptions()
 {
     return array(
         // a text field type allows for single line text input
@@ -147,7 +147,7 @@ function provisioningmodule_ConfigOptions()
  *
  * @return string "success" or an error message
  */
-function provisioningmodule_CreateAccount(array $params)
+function dcmgmt_CreateAccount(array $params)
 {
     try {
         // Call the service's provisioning function, using the values provided
@@ -195,7 +195,7 @@ function provisioningmodule_CreateAccount(array $params)
  *
  * @return string "success" or an error message
  */
-function provisioningmodule_SuspendAccount(array $params)
+function dcmgmt_SuspendAccount(array $params)
 {
     try {
         // Call the service's suspend function, using the values provided by
@@ -229,7 +229,7 @@ function provisioningmodule_SuspendAccount(array $params)
  *
  * @return string "success" or an error message
  */
-function provisioningmodule_UnsuspendAccount(array $params)
+function dcmgmt_UnsuspendAccount(array $params)
 {
     try {
         // Call the service's unsuspend function, using the values provided by
@@ -262,7 +262,7 @@ function provisioningmodule_UnsuspendAccount(array $params)
  *
  * @return string "success" or an error message
  */
-function provisioningmodule_TerminateAccount(array $params)
+function dcmgmt_TerminateAccount(array $params)
 {
     try {
         // Call the service's terminate function, using the values provided by
@@ -299,7 +299,7 @@ function provisioningmodule_TerminateAccount(array $params)
  *
  * @return string "success" or an error message
  */
-function provisioningmodule_ChangePassword(array $params)
+function dcmgmt_ChangePassword(array $params)
 {
     try {
         // Call the service's change password function, using the values
@@ -345,7 +345,7 @@ function provisioningmodule_ChangePassword(array $params)
  *
  * @return string "success" or an error message
  */
-function provisioningmodule_ChangePackage(array $params)
+function dcmgmt_ChangePackage(array $params)
 {
     try {
         // Call the service's change password function, using the values
@@ -393,7 +393,7 @@ function provisioningmodule_ChangePackage(array $params)
  *
  * @return array
  */
-function provisioningmodule_TestConnection(array $params)
+function dcmgmt_TestConnection(array $params)
 {
     try {
         // Call the service's connection test function.
@@ -430,7 +430,7 @@ function provisioningmodule_TestConnection(array $params)
  *
  * @return array
  */
-function provisioningmodule_AdminCustomButtonArray()
+function dcmgmt_AdminCustomButtonArray()
 {
     return array(
         "Button 1 Display Value" => "buttonOneFunction",
@@ -449,7 +449,7 @@ function provisioningmodule_AdminCustomButtonArray()
  *
  * @return array
  */
-function provisioningmodule_ClientAreaCustomButtonArray()
+function dcmgmt_ClientAreaCustomButtonArray()
 {
     return array(
         "Action 1 Display Value" => "actionOneFunction",
@@ -472,7 +472,7 @@ function provisioningmodule_ClientAreaCustomButtonArray()
  *
  * @return string "success" or an error message
  */
-function provisioningmodule_buttonOneFunction(array $params)
+function dcmgmt_buttonOneFunction(array $params)
 {
     try {
         // Call the service's function, using the values provided by WHMCS in
@@ -508,7 +508,7 @@ function provisioningmodule_buttonOneFunction(array $params)
  *
  * @return string "success" or an error message
  */
-function provisioningmodule_actionOneFunction(array $params)
+function dcmgmt_actionOneFunction(array $params)
 {
     try {
         // Call the service's function, using the values provided by WHMCS in
@@ -545,7 +545,7 @@ function provisioningmodule_actionOneFunction(array $params)
  *
  * @return array
  */
-function provisioningmodule_AdminServicesTabFields(array $params)
+function dcmgmt_AdminServicesTabFields(array $params)
 {
     try {
         // Call the service's function, using the values provided by WHMCS in
@@ -592,7 +592,7 @@ function provisioningmodule_AdminServicesTabFields(array $params)
  * @see http://docs.whmcs.com/Provisioning_Module_SDK_Parameters
  * @see provisioningmodule_AdminServicesTabFields()
  */
-function provisioningmodule_AdminServicesTabFieldsSave(array $params)
+function dcmgmt_AdminServicesTabFieldsSave(array $params)
 {
     // Fetch form submission variables.
     $originalFieldValue = isset($_REQUEST['provisioningmodule_original_uniquefieldname'])
@@ -636,7 +636,7 @@ function provisioningmodule_AdminServicesTabFieldsSave(array $params)
  *
  * @return array
  */
-function provisioningmodule_ServiceSingleSignOn(array $params)
+function dcmgmt_ServiceSingleSignOn(array $params)
 {
     try {
         // Call the service's single sign-on token retrieval function, using the
@@ -681,7 +681,7 @@ function provisioningmodule_ServiceSingleSignOn(array $params)
  *
  * @return array
  */
-function provisioningmodule_AdminSingleSignOn(array $params)
+function dcmgmt_AdminSingleSignOn(array $params)
 {
     try {
         // Call the service's single sign-on admin token retrieval function,
@@ -739,7 +739,7 @@ function provisioningmodule_AdminSingleSignOn(array $params)
  *
  * @return array
  */
-function provisioningmodule_ClientArea(array $params)
+function dcmgmt_ClientArea(array $params)
 {
     // Determine the requested action and set service call parameters based on
     // the action.
