@@ -10,6 +10,11 @@ def connect(routerip,username,password):
 	process.sendline(username)
 	process.expect_exact('Password:')
 	process.sendline(password)
+	i=process.expect_exact(['>', 'Authentication failed.'])
+	if i!==0:
+		print "ERR: % Authentication failed."
+		exit(1)
+	process.sendline('')
 
 def disconnect():
 	global process
