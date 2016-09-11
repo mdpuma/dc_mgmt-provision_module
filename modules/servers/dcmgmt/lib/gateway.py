@@ -2,7 +2,6 @@
 
 import argparse
 import pexpect
-from sys import argv
 
 def connect(routerip,user,pass):
 	global process
@@ -15,21 +14,21 @@ def connect(routerip,user,pass):
 def disconnect():
 	global process
 	process.sendline('end')
-	process.expect_exact('#')
+	process.expect_exact('>')
 	process.sendline('exit')
 
 def nullroute(action,customerip):
 	global process
-	process.expect_exact('#')
+	process.expect_exact('>')
 	process.sendline('conf t')
-	process.expect_exact('(config)#')
+	process.expect_exact('(config)>')
 	if action=='suspend':
 		process.sendline('ip route '+customerip+' 255.255.255.255 null0')
-		process.expect_exact('(config)#')
+		process.expect_exact('(config)>')
 		print "OK"
 	else:
 		process.sendline('no ip route '+customerip+' 255.255.255.255 null0')
-		i=process.expect_exact(['(config)#','%No matching route to delete'])
+		i=process.expect_exact(['(config)>','%No matching route to delete'])
 		if i==1:
 			print "ERR: %No matching route to delete"
 		else:
@@ -37,16 +36,16 @@ def nullroute(action,customerip):
 	
 def shutdownport(action,interface):
 	global process
-	process.expect_exact('#')
+	process.expect_exact('>')
 	process.sendline('conf t')
-	process.expect_exact('(config)#')
+	process.expect_exact('(config)>')
 	if action=='suspend':
 		process.sendline('interface '+interface)
-		process.expect_exact('(config-if)#')
+		process.expect_exact('(config-if)>')
 		process.sendline('shutdown')
 	else:
 		process.sendline('interface '+interface)
-		process.expect_exact('(config-if)#')
+		process.expect_exact('(config-if)>')
 		process.sendline('no shutdown')
 	print "OK"
 

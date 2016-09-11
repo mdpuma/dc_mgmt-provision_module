@@ -18,7 +18,7 @@ Copy files in to root directory of WHMCS
 
 ## Configure
 
-Add custom fields:
+1. Add custom fields in to WHMCS:
 
 	name:	interface
 	type:	text box
@@ -27,6 +27,19 @@ Add custom fields:
 	name:	customerip
 	type:	text box
 	valid:	^(\d+)\.(\d+)\.(\d+)\.(\d+)$
+
+2. Configure unprivileged user to use interface shutdown
+
+	aaa new-model
+	aaa authentication login default local
+	aaa authorization exec default local
+
+	privilege interface level 1 shutdown
+	privilege configure level 1 interface
+	privilege configure level 1 ip route
+	privilege exec level 1 configure terminal
+
+	username whmcs privilege 1 secret YOUR_SECRET_PASSWORD
 
 ## TODO ##
 
