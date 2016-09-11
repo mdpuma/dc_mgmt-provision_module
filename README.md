@@ -22,7 +22,7 @@ Copy files in to root directory of WHMCS
 
 	name:	interface
 	type:	text box
-	valid:	^(gi|vlan)(?/?\d+)+$
+	valid:	^(gi|vlan|vl)(\/?\d+)+$
 
 	name:	customerip
 	type:	text box
