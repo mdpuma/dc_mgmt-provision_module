@@ -4,16 +4,13 @@ import argparse
 import pexpect
 from sys import argv
 
-login='danroot'
-password='acREd91Sim@'
-
-def connect(routerip):
+def connect(routerip,user,pass):
 	global process
 	process=pexpect.spawn('telnet '+routerip)
 	process.expect_exact('Username:')
-	process.sendline(login)
+	process.sendline(user)
 	process.expect_exact('Password:')
-	process.sendline(password)
+	process.sendline(pass)
 
 def disconnect():
 	global process
@@ -54,11 +51,13 @@ def shutdownport(action,interface):
 	print "OK"
 
 def help():
-	print "Usage ./gateway.pl --routerip=1.1.1.1 --action=(suspend|unsuspend) --type=(shutdownport|nullroute) [--customerip=2.2.2.2] [--interface=gi1/1]"
+	print "Usage ./gateway.pl --routerip=1.1.1.1 --user=username --pass=password --action=(suspend|unsuspend) --type=(shutdownport|nullroute) [--customerip=2.2.2.2] [--interface=gi1/1]"
 	exit(0)
 
 parser=argparse.ArgumentParser(description="Gateway to cisco router")
 parser.add_argument("--routerip", required=True)
+parser.add_argument("--user", required=True)
+parser.add_argument("--pass", required=True)
 parser.add_argument("--action", required=True)
 parser.add_argument("--type", required=True)
 parser.add_argument("--customerip")
@@ -71,7 +70,7 @@ if args.type == "nullroute":
 		print "ERR: empty --customerip"
 		exit(1)
 	
-	connect(args.routerip)
+	connect(args.routerip,args.user,args.pass)
 	nullroute(args.action,args.customerip)
 	disconnect()
 elif args.type == "shutdownport":
@@ -79,7 +78,7 @@ elif args.type == "shutdownport":
 		print "ERR: empty --interface"
 		exit(1)
 	
-	connect(args.routerip)
+	connect(args.routerip,args.user,args.pass)
 	shutdownport(args.action,args.interface)
 	disconnect()
 else:
