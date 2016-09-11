@@ -20,13 +20,13 @@ Copy files in to root directory of WHMCS
 
 Add custom fields:
 
-name:	interface
-type:	text box
-valid:	^(gi|vlan)(?/?\d+)+$
+	name:	interface
+	type:	text box
+	valid:	^(gi|vlan)(?/?\d+)+$
 
-name:	customerip
-type:	text box
-valid:	^(\d+)\.(\d+)\.(\d+)\.(\d+)$
+	name:	customerip
+	type:	text box
+	valid:	^(\d+)\.(\d+)\.(\d+)\.(\d+)$
 
 ## TODO ##
 
