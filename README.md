@@ -41,6 +41,17 @@ Copy files in to root directory of WHMCS
 
 	username whmcs privilege 1 secret YOUR_SECRET_PASSWORD
 
+## Known Issues
+
+* cant suspend service if called from cron
+
+- ERROR: Manual Suspension Required - ERROR from backend: Traceback (most recent call last): 
+  File "/home/innovanet/public_html/modules/servers/dcmgmt/lib/gateway.py", line 85, in connect(args.routerip,args.username,args.password) 
+  File "/home/innovanet/public_html/modules/servers/dcmgmt/lib/gateway.py", line 8, in connect process=pexpect.spawn('telnet '+routerip) 
+  File "/usr/lib/python2.6/site-packages/pexpect.py", line 429, in __init__ self._spawn (command, args) 
+  File "/usr/lib/python2.6/site-packages/pexpect.py", line 529, in _spawn raise ExceptionPexpect('Error! pty.fork() failed: ' + str(e)) pexpect.ExceptionPexpect: Error! pty.fork() failed: out of pty devices
+	
+* Check if SHELL variable in crontab is equal to not restricted shell like jailshell or just add SHELL="/bin/bash"
 ## TODO ##
 
 * Add support of more switch types
