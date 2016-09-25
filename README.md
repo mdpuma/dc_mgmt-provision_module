@@ -7,6 +7,8 @@ Datacenter management module
 	python-pexpect
 	python-argparse
 	telnet
+	net-snmp
+	net-snmp-utils
 
 ## Functions ##
 
@@ -15,6 +17,10 @@ Datacenter management module
 ## Installation
 
 Copy files in to root directory of WHMCS
+
+Add crontab record
+
+0 1 * * *  php -q /root-directory-of-your-whmcs/modules/servers/dcmgmt/cron.php
 
 ## Configure
 

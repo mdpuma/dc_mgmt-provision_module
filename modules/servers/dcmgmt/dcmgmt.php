@@ -443,24 +443,35 @@ function dcmgmt_ClientAreaCustomButtonArray()
  */
 function dcmgmt_AdminServicesTabFields(array $params)
 {
-    try {
-        // Call the service's function, using the values provided by WHMCS in
-        // `$params`.
-        return array();
-    } catch (Exception $e) {
-        // Record the error in WHMCS's module log.
-        logModuleCall(
-            'provisioningmodule',
-            __FUNCTION__,
-            $params,
-            $e->getMessage(),
-            $e->getTraceAsString()
-        );
-
-        // In an error condition, simply return no additional fields to display.
-    }
-
-    return array();
+	// $params['customfields']['interface']
+	// querying last 30 days
+	$last_30=array('rx'=>0,'tx'=>0,'total'=>0,'days'=>0);
+	$query = "SELECT id, rx, tx FROM `mod_dcmgmt_bandwidth_port` WHERE name = '".$params['customfields']['interface']."' AND timestamp >= (NOW()-INTERVAL 30 DAY) ORDER by id ASC";
+	$mysql_result = mysql_query($query);
+	$data=array();
+	while($data1 = mysql_fetch_array($mysql_result, MYSQL_ASSOC)) {
+		$data[]=$data1;
+	}
+	foreach($data as $i => $data1) {
+		if(!isset($data[$i+1])) break;
+		$last_30['rx']+=$data[$i+1]['rx']-$data1['rx'];
+		$last_30['tx']+=$data[$i+1]['tx']-$data1['tx'];
+		$last_30['days']++;
+	}
+	$last_30['total']=$last_30['rx']+$last_30['tx'];
+	
+	
+	$fieldsarray = array(
+		'Bandwidth Usage (last 30 days)' => 
+			"Received: ".dcmgmt_formatSize($last_30['rx'])."<br>".
+			"Sent: ".dcmgmt_formatSize($last_30['tx'])."<br>".
+			"Total: ".dcmgmt_formatSize($last_30['total'])."<br>",
+		'Average Speed (last 30 days)' => 
+			"Receiving: ".dcmgmt_formatSpeed($last_30['rx']/(24*$last_30['days']*3600))."<br>".
+			"Sending: ".dcmgmt_formatSpeed($last_30['tx']/(24*$last_30['days']*3600))."<br>",
+	);
+	return $fieldsarray;
+	//return array();
 }
 
 /**
@@ -673,4 +684,18 @@ function dcmgmt_ClientArea(array $params)
         );
     }
     */
+}
+
+function dcmgmt_formatSize($size) {
+	$mod = 1000;
+	$units = explode(' ','B KB MB GB TB PB');
+	for ($i = 0; $size > $mod; $i++) {$size /= $mod;}
+	return round($size, 3) . ' ' . $units[$i];
+}
+
+function dcmgmt_formatSpeed($speed) {
+	$mod = 1000;
+	$units = explode(' ','bits Kbit Mbit Gbit');
+	for ($i = 0; $speed > $mod; $i++) {$speed /= $mod;}
+	return round($speed, 3) . ' ' . $units[$i];
 }
