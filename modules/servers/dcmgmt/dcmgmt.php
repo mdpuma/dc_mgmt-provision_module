@@ -144,14 +144,14 @@ function dcmgmt_SuspendAccount(array $params)
 				if(!preg_match("/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/", $params['customfields']['customerip'])) {
 					throw new exception("ERROR: empty customerip");
 				}
-				$output = shell_exec("python ".__DIR__."/lib/gateway.py --hwtype=cisco --routerip=".$params['serverip']." --username=".$params['serverusername']." --password=".$params['serverpassword']." --action=suspend --type=nullroute --customerip=".$params['customfields']['customerip']." 2>&1");
+				$output = shell_exec("python ".__DIR__."/lib/gateway.py --routerip=".$params['serverip']." --username=".$params['serverusername']." --password=".$params['serverpassword']." --action=suspend --type=nullroute --customerip=".$params['customfields']['customerip']." 2>&1");
 				break;
 			}
 			case 'Disable network port': {
 				if(!preg_match("/^(gi|vlan|vl)(\/?\d+)+$/", $params['customfields']['interface'])) {
 					throw new exception("ERROR: empty interface");
 				}
-				$output = shell_exec("python ".__DIR__."/lib/gateway.py --hwtype=cisco --routerip=".$params['serverip']." --username=".$params['serverusername']." --password=".$params['serverpassword']." --action=suspend --type=shutdownport --interface=".$params['customfields']['interface']." 2>&1");
+				$output = shell_exec("python ".__DIR__."/lib/gateway.py --routerip=".$params['serverip']." --username=".$params['serverusername']." --password=".$params['serverpassword']." --action=suspend --type=shutdownport --interface=".$params['customfields']['interface']." 2>&1");
 				break;
 			}
 		}
