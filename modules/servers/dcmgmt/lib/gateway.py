@@ -10,7 +10,6 @@ class gateway:
         i = self.p.expect(['Username:', 'Press any key to continue'])
         if i==0:
             self.hwtype='cisco'
-            self.p.expect_exact('Username:')
             self.p.sendline(username)
             self.p.expect_exact('Password:')
             self.p.sendline(password)
