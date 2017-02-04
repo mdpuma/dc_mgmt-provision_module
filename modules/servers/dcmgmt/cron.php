@@ -30,7 +30,7 @@ while($server = mysql_fetch_array($mysql_result, MYSQL_ASSOC)) {
 	foreach($lines as $line) {
 		# IF-MIB::ifName.1 = STRING: Gi1/1
 		preg_match('/^IF-MIB::ifName.(\d+) = STRING: (.*)$/', $line, $matches);
-		if(preg_match('/^Gi|Vl|Po$/', $matches[2])) {
+		if(preg_match('/^(Gi|Vl|Po|Tu|\d+)/', $matches[2])) {
 			$interfaces[$matches[1]]['name'] = strtolower($matches[2]);
 		}
 	}
