@@ -14,6 +14,11 @@ if (!defined("WHMCS")) {
 //
 // Also, perform any initialization required by the service's library.
 
+$community = 'innovasnmp';
+$version = '2c';
+
+use WHMCS\Database\Capsule;
+
 /**
  * Define module related meta data.
  *
@@ -684,6 +689,143 @@ function dcmgmt_ClientArea(array $params)
         );
     }
     */
+}
+
+function dcmgmt_UsageUpdate($params) {
+	$serverid = $params['serverid'];
+	$serverhostname = $params['serverhostname'];
+	$serverip = $params['serverip'];
+	$serverusername = $params['serverusername'];
+	$serverpassword = $params['serverpassword'];
+	$serveraccesshash = $params['serveraccesshash'];
+	$serversecure = $params['serversecure'];
+
+	# Run connection to retrieve usage for all domains/accounts on $serverid
+	// get interface names with index
+	$interfaces = '';
+	$output = shell_exec("snmpwalk -v$version -c $community -m IF-MIB ".$serverip." IF-MIB::ifName");
+	$lines = explode("\n", $output);
+	foreach($lines as $line) {
+		# IF-MIB::ifName.1 = STRING: Gi1/1
+		preg_match('/^IF-MIB::ifName.(\d+) = STRING: (.*)$/', $line, $matches);
+		if(preg_match('/^(Gi|Vl|Po|Tu|\d+)/', $matches[2])) {
+			$interfaces[$matches[1]]['name'] = strtolower($matches[2]);
+		}
+	}
+	
+	// get incoming bytes
+	$output = shell_exec("snmpwalk -v$version -c $community -m IF-MIB ".$serverip." IF-MIB::ifHCInOctets");
+	$lines = explode("\n", $output);
+	foreach($lines as $line) {
+		# IF-MIB::ifHCInOctets.182 = Counter64: 1469416807863
+		preg_match('/^IF-MIB::ifHCInOctets.(\d+) = Counter64: (.*)$/', $line, $matches);
+		if(isset($interfaces[$matches[1]])) {
+			$interfaces[$matches[1]]['rx'] = $matches[2];
+		}
+	}
+	
+	// get outgoing bytes
+	$output = shell_exec("snmpwalk -v$version -c $community -m IF-MIB ".$serverip." IF-MIB::ifHCOutOctets");
+	$lines = explode("\n", $output);
+	foreach($lines as $line) {
+		# IF-MIB::ifHCOutOctets.182 = Counter64: 1469416807863
+		preg_match('/^IF-MIB::ifHCOutOctets.(\d+) = Counter64: (.*)$/', $line, $matches);
+		if(isset($interfaces[$matches[1]])) {
+			$interfaces[$matches[1]]['tx'] = $matches[2];
+		}
+	}
+	
+	$pdo = Capsule::connection()->getPdo();
+	$pdo->beginTransaction();
+	
+	try {
+		$stmt = $pdo->prepare('insert into `mod_dcmgmt_bandwidth_port` (serverid, timestamp, name, rx, tx) values (:serverid, NOW(), :name, :rx, :tx)');
+		
+		foreach($interfaces as $id => $data) {
+			$stmt->execute([
+				':serverid' => $serverid,
+				':name'     => $data['name'],
+				':rx'       => $data['rx'],
+				':tx'       => $data['tx'],
+			]);
+		}
+		$pdo->commit();
+	} catch (\Exception $e) {
+	    echo "Error happen! Rollback transactions {$e->getMessage()}";
+	    $pdo->rollBack();
+	}
+	
+	# Now loop through results and update DB
+	/*
+	  get productid, fieldname, interface, nextduedate 
+	  
+	  SELECT tblhosting.id, tblcustomfields.fieldname, tblcustomfieldsvalues.value, tblhosting.nextduedate
+	  FROM tblhosting, tblcustomfields, tblcustomfieldsvalues
+	  WHERE tblcustomfields.fieldname = 'interface'
+	  AND tblcustomfieldsvalues.value != ''
+	  AND tblhosting.id = tblcustomfieldsvalues.relid
+	  AND tblcustomfieldsvalues.fieldid = tblcustomfields.id
+	*/
+	$products_info = DB::table('tblhosting')
+            ->join('tblcustomfields', 'tblcustomfieldsvalues.fieldid', '=', 'tblcustomfields.id')
+            ->join('tblcustomfieldsvalues', 'tblhosting.id', '=', 'tblcustomfieldsvalues.relid')
+            ->select('tblhosting.id', 'tblcustomfields.fieldname', 'tblcustomfieldsvalues.value', 'tblhosting.nextduedate')
+            ->where('tblcustomfields.fieldname', '=', 'interface')
+            ->where('tblcustomfieldsvalues.value', '!=', '')
+            ->get();
+	
+	// check all products and calculate used Bandwidth
+	/*
+	   example get bandwidth stats from 2017-03-10 - 2017-04-10(argument)
+	    SELECT id, rx, tx, timestamp
+	    FROM `mod_dcmgmt_bandwidth_port`
+	    WHERE name = 'gi7/38'
+	    AND timestamp <= '2017-04-10'
+	    AND timestamp >= ( '2017-04-10' - INTERVAL 30
+	    DAY )
+	    ORDER BY id ASC 
+	*/
+	$results = '';
+	foreach($products_info as $product) {
+		// product['value'] is interface name
+		$last_month = array('rx'=>0, 'tx'=>0, 'total'=>0, 'days'=>0);
+		
+		$traffic_result = DB::table('mod_dcmgmt_bandwidth_port')
+		    ->select('id','rx','tx')
+		    ->where('name', '=', $product['value'])
+		    ->where('timestamp', '<=', $product['nextduedate'])
+		    ->where('timestamp', '>=', date('Y-m-d', strtotime($product['nextduedate'])-3600*24*31))
+		    ->orderBy('id', 'desc')
+		    ->get();
+		foreach($traffic_result as $i => $date) {
+			if(!isset($date[$i+1])) break;
+			$last_month['rx'] += $date[$i+1]['rx'] - $date['rx'];
+			$last_month['tx'] += $date[$i+1]['tx'] - $date['tx'];
+			$last_month['days']++;
+		}
+		$last_month['total'] = $last_month['rx'] + $last_month['tx'];
+		$results[$product['id']] = $last_month['total']/1024/1024; # convert bytes to megabytes
+	}
+	
+	/*
+	  disk and bw units is MB
+	*/
+	$pdo->beginTransaction();
+	try {
+		$stmt = $pdo->prepare('update `tblhosting` set diskused=0, disklimit=0, bwusage=:bwusage, bwlimit=:bwlimit, lastupdate=now() where id=:productid');
+		
+		foreach($results as $productid => $bwused) {
+			$stmt->execute([
+				':productid' => $productid,
+				':bwusage'   => $bwused,
+				':bwlimit'   => 5*1024*1024,
+			]);
+		}
+		$pdo->commit();
+	} catch (\Exception $e) {
+	    echo "Error happen! Rollback transactions {$e->getMessage()}";
+	    $pdo->rollBack();
+	}
 }
 
 function dcmgmt_formatSize($size) {
