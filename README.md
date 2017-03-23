@@ -47,6 +47,15 @@ Add crontab record
 
 	username whmcs privilege 1 secret YOUR_SECRET_PASSWORD
 
+3. Configure login and password in to WHMCS -> Servers
+
+	Access hash is used for community and other parameters
+
+	<dcmgmt>
+	  <snmpver>1|2c|3</snmpver>
+	  <community>public</community>
+	</dcmgmt>
+	
 ## Known Issues
 
 * cant suspend service if called from cron

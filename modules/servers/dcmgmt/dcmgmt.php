@@ -14,9 +14,6 @@ if (!defined("WHMCS")) {
 //
 // Also, perform any initialization required by the service's library.
 
-$community = 'innovasnmp';
-$version = '2c';
-
 use WHMCS\Database\Capsule;
 
 /**
@@ -34,7 +31,7 @@ function dcmgmt_MetaData()
     return array(
         'DisplayName' => 'Datacenter Management',
         'APIVersion' => '1.1', // Use API Version 1.1
-        'RequiresServer' => false, // Set true if module requires a server to work
+        'RequiresServer' => true, // Set true if module requires a server to work
         'DefaultNonSSLPort' => '1111', // Default Non-SSL Connection Port
         'DefaultSSLPort' => '1112', // Default SSL Connection Port
         'ServiceSingleSignOnLabel' => 'Login to Panel as User',
@@ -699,11 +696,19 @@ function dcmgmt_UsageUpdate($params) {
 	$serverpassword = $params['serverpassword'];
 	$serveraccesshash = $params['serveraccesshash'];
 	$serversecure = $params['serversecure'];
-
+	
+	$serveraccesshash = simplexml_load_string($serveraccesshash);
+	
+	if(!isset($serveraccesshash->community))
+		$serveraccesshash->community = 'public';
+		
+	if(!isset($serveraccesshash->snmpver))
+		$serveraccesshash->snmpver = '2c';
+	
 	# Run connection to retrieve usage for all domains/accounts on $serverid
 	// get interface names with index
 	$interfaces = '';
-	$output = shell_exec("snmpwalk -v$version -c $community -m IF-MIB ".$serverip." IF-MIB::ifName");
+	$output = shell_exec('snmpwalk -v'.$serveraccesshash->snmpver.' -c '.$serveraccesshash->community.' -m IF-MIB '.$serverip.' IF-MIB::ifName');
 	$lines = explode("\n", $output);
 	foreach($lines as $line) {
 		# IF-MIB::ifName.1 = STRING: Gi1/1
@@ -714,7 +719,7 @@ function dcmgmt_UsageUpdate($params) {
 	}
 	
 	// get incoming bytes
-	$output = shell_exec("snmpwalk -v$version -c $community -m IF-MIB ".$serverip." IF-MIB::ifHCInOctets");
+	$output = shell_exec('snmpwalk -v'.$serveraccesshash->snmpver.' -c '.$serveraccesshash->community.' -m IF-MIB '.$serverip.' IF-MIB::ifHCInOctets');
 	$lines = explode("\n", $output);
 	foreach($lines as $line) {
 		# IF-MIB::ifHCInOctets.182 = Counter64: 1469416807863
@@ -725,7 +730,7 @@ function dcmgmt_UsageUpdate($params) {
 	}
 	
 	// get outgoing bytes
-	$output = shell_exec("snmpwalk -v$version -c $community -m IF-MIB ".$serverip." IF-MIB::ifHCOutOctets");
+	$output = shell_exec('snmpwalk -v'.$serveraccesshash->snmpver.' -c '.$serveraccesshash->community.' -m IF-MIB '.$serverip.' IF-MIB::ifHCOutOctets');
 	$lines = explode("\n", $output);
 	foreach($lines as $line) {
 		# IF-MIB::ifHCOutOctets.182 = Counter64: 1469416807863
@@ -766,13 +771,13 @@ function dcmgmt_UsageUpdate($params) {
 	  AND tblhosting.id = tblcustomfieldsvalues.relid
 	  AND tblcustomfieldsvalues.fieldid = tblcustomfields.id
 	*/
-	$products_info = DB::table('tblhosting')
-            ->join('tblcustomfields', 'tblcustomfieldsvalues.fieldid', '=', 'tblcustomfields.id')
-            ->join('tblcustomfieldsvalues', 'tblhosting.id', '=', 'tblcustomfieldsvalues.relid')
-            ->select('tblhosting.id', 'tblcustomfields.fieldname', 'tblcustomfieldsvalues.value', 'tblhosting.nextduedate')
-            ->where('tblcustomfields.fieldname', '=', 'interface')
-            ->where('tblcustomfieldsvalues.value', '!=', '')
-            ->get();
+	$products_info = Capsule::table('tblcustomfieldsvalues')
+	    ->select('tblhosting.id', 'tblcustomfields.fieldname', 'tblcustomfieldsvalues.value', 'tblhosting.nextduedate')
+	    ->join('tblhosting', 'tblhosting.id', '=', 'tblcustomfieldsvalues.relid')
+	    ->join('tblcustomfields', 'tblcustomfields.id', '=', 'tblcustomfieldsvalues.fieldid')
+	    ->where('tblcustomfields.fieldname', '=', 'interface')
+	    ->where('tblcustomfieldsvalues.value', '!=', NULL)
+	    ->get();
 	
 	// check all products and calculate used Bandwidth
 	/*
@@ -790,29 +795,28 @@ function dcmgmt_UsageUpdate($params) {
 		// product['value'] is interface name
 		$last_month = array('rx'=>0, 'tx'=>0, 'total'=>0, 'days'=>0);
 		
-		$traffic_result = DB::table('mod_dcmgmt_bandwidth_port')
+		$traffic_result = Capsule::table('mod_dcmgmt_bandwidth_port')
 		    ->select('id','rx','tx')
-		    ->where('name', '=', $product['value'])
-		    ->where('timestamp', '<=', $product['nextduedate'])
-		    ->where('timestamp', '>=', date('Y-m-d', strtotime($product['nextduedate'])-3600*24*31))
-		    ->orderBy('id', 'desc')
+		    ->where('name', '=', $product->value)
+		    ->where('timestamp', '<=', $product->nextduedate)
+		    ->where('timestamp', '>=', date('Y-m-d', strtotime($product->nextduedate)-3600*24*31))
+		    ->orderBy('id', 'asc')
 		    ->get();
+		
 		foreach($traffic_result as $i => $date) {
-			if(!isset($date[$i+1])) break;
-			$last_month['rx'] += $date[$i+1]['rx'] - $date['rx'];
-			$last_month['tx'] += $date[$i+1]['tx'] - $date['tx'];
+			if(!isset($traffic_result[$i+1])) break;
+			$last_month['rx'] += $traffic_result[$i+1]->rx - $date->rx;
+			$last_month['tx'] += $traffic_result[$i+1]->tx - $date->tx;
 			$last_month['days']++;
 		}
 		$last_month['total'] = $last_month['rx'] + $last_month['tx'];
-		$results[$product['id']] = $last_month['total']/1024/1024; # convert bytes to megabytes
+		$results[$product->id] = round($last_month['total']/1024/1024, 2); # convert bytes to megabytes
 	}
 	
-	/*
-	  disk and bw units is MB
-	*/
+	/* disk and bw units is MB */
 	$pdo->beginTransaction();
 	try {
-		$stmt = $pdo->prepare('update `tblhosting` set diskused=0, disklimit=0, bwusage=:bwusage, bwlimit=:bwlimit, lastupdate=now() where id=:productid');
+		$stmt = $pdo->prepare('update `tblhosting` set diskusage=0, disklimit=0, bwusage=:bwusage, bwlimit=:bwlimit, lastupdate=now() where id=:productid');
 		
 		foreach($results as $productid => $bwused) {
 			$stmt->execute([
