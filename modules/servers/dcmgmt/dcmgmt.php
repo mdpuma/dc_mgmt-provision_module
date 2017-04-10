@@ -447,30 +447,16 @@ function dcmgmt_AdminServicesTabFields(array $params)
 {
 	// $params['customfields']['interface']
 	// querying last 30 days
-	$last_30=array('rx'=>0,'tx'=>0,'total'=>0,'days'=>0);
-	$query = "SELECT id, rx, tx FROM `mod_dcmgmt_bandwidth_port` WHERE name = '".$params['customfields']['interface']."' AND timestamp >= (NOW()-INTERVAL 30 DAY) ORDER by id ASC";
-	$mysql_result = mysql_query($query);
-	$data=array();
-	while($data1 = mysql_fetch_array($mysql_result, MYSQL_ASSOC)) {
-		$data[]=$data1;
-	}
-	foreach($data as $i => $data1) {
-		if(!isset($data[$i+1])) break;
-		$last_30['rx']+=$data[$i+1]['rx']-$data1['rx'];
-		$last_30['tx']+=$data[$i+1]['tx']-$data1['tx'];
-		$last_30['days']++;
-	}
-	$last_30['total']=$last_30['rx']+$last_30['tx'];
-	
+	$results = get_bwusage($params['customfields']['interface'], '31d');
 	
 	$fieldsarray = array(
 		'Bandwidth Usage (last 30 days)' => 
-			"Received: ".dcmgmt_formatSize($last_30['rx'])."<br>".
-			"Sent: ".dcmgmt_formatSize($last_30['tx'])."<br>".
-			"Total: ".dcmgmt_formatSize($last_30['total'])."<br>",
+			"Received: ".dcmgmt_formatSize($results['rx'])."<br>".
+			"Sent: ".dcmgmt_formatSize($results['tx'])."<br>".
+			"Total: ".dcmgmt_formatSize($results['total'])."<br>",
 		'Average Speed (last 30 days)' => 
-			"Receiving: ".dcmgmt_formatSpeed($last_30['rx']/(24*$last_30['days']*3600))."<br>".
-			"Sending: ".dcmgmt_formatSpeed($last_30['tx']/(24*$last_30['days']*3600))."<br>",
+			"Receiving: ".dcmgmt_formatSpeed($results['rx']/(24*$results['days']*3600))."<br>".
+			"Sending: ".dcmgmt_formatSpeed($results['tx']/(24*$results['days']*3600))."<br>",
 	);
 	return $fieldsarray;
 	//return array();
@@ -845,4 +831,29 @@ function dcmgmt_formatSpeed($speed) {
 	$units = explode(' ','bits Kbit Mbit Gbit');
 	for ($i = 0; $speed > $mod; $i++) {$speed /= $mod;}
 	return round($speed, 3) . ' ' . $units[$i];
+}
+
+// type may be month or 31d for last 31 days
+function get_bwusage($interface, $type = 'month', $nextduedate = null)
+{
+	if ($type == 'month') {
+		$day = date('d', $nextduedate);
+		$prev_month = date('m')-1;
+		$from = date('Y').'-'.$prev_month.'-'.$day;
+		$to = date('Y-m').'-'.$day;
+		$traffic_result = Capsule::table('mod_dcmgmt_bandwidth_port')->select('id', 'rx', 'tx')->where('name', '=', $interface)->where('timestamp', '>=', $from)->where('timestamp', '<=', $to)->orderBy('id', 'asc')->get();
+	}
+	else {
+		$traffic_result = Capsule::table('mod_dcmgmt_bandwidth_port')->select('id', 'rx', 'tx')->where('name', '=', $interface)->where('timestamp', '<=', date('Y-m-d'))->where('timestamp', '>=', date('Y-m-d', date('U') - 3600 * 24 * 31))->orderBy('id', 'asc')->get();
+	}
+	foreach($traffic_result as $i => $date) {
+		if (!isset($traffic_result[$i + 1])) break;
+		if ($traffic_result[$i + 1]->rx >= $traffic_result[$i]->rx) {
+			$last_month['rx']+= $traffic_result[$i + 1]->rx - $date->rx;
+			$last_month['tx']+= $traffic_result[$i + 1]->tx - $date->tx;
+		}
+		$last_month['days']++;
+	}
+	$last_month['total'] = $last_month['rx'] + $last_month['tx'];
+	return $last_month;
 }

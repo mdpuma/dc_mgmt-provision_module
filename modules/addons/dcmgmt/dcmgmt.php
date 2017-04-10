@@ -165,16 +165,21 @@ function dcmgmt_clientarea($vars) {
 function get_bwusage($interface, $type = 'month', $nextduedate = null)
 {
 	if ($type == 'month') {
-		$traffic_result = Capsule::table('mod_dcmgmt_bandwidth_port')->select('id', 'rx', 'tx')->where('name', '=', $interface)->where('timestamp', '<=', $nextduedate)->where('timestamp', '>=', date('Y-m-d', strtotime($nextduedate) - 3600 * 24 * 31))->orderBy('id', 'asc')->get();
+		$day = date('d', $nextduedate);
+		$prev_month = date('m')-1;
+		$from = date('Y').'-'.$prev_month.'-'.$day;
+		$to = date('Y-m').'-'.$day;
+		$traffic_result = Capsule::table('mod_dcmgmt_bandwidth_port')->select('id', 'rx', 'tx')->where('name', '=', $interface)->where('timestamp', '>=', $from)->where('timestamp', '<=', $to)->orderBy('id', 'asc')->get();
 	}
 	else {
 		$traffic_result = Capsule::table('mod_dcmgmt_bandwidth_port')->select('id', 'rx', 'tx')->where('name', '=', $interface)->where('timestamp', '<=', date('Y-m-d'))->where('timestamp', '>=', date('Y-m-d', date('U') - 3600 * 24 * 31))->orderBy('id', 'asc')->get();
 	}
 	foreach($traffic_result as $i => $date) {
 		if (!isset($traffic_result[$i + 1])) break;
-
-		$last_month['rx']+= $traffic_result[$i + 1]->rx - $date->rx;
-		$last_month['tx']+= $traffic_result[$i + 1]->tx - $date->tx;
+		if ($traffic_result[$i + 1]->rx >= $traffic_result[$i]->rx) {
+			$last_month['rx']+= $traffic_result[$i + 1]->rx - $date->rx;
+			$last_month['tx']+= $traffic_result[$i + 1]->tx - $date->tx;
+		}
 		$last_month['days']++;
 	}
 	$last_month['total'] = $last_month['rx'] + $last_month['tx'];
@@ -182,9 +187,9 @@ function get_bwusage($interface, $type = 'month', $nextduedate = null)
 	return $results;
 }
 
-function print_bwusage($bw)
+function print_bwusage($bw, $limit=5000)
 {
-	if (intval($bw) < 5000) return '<span class="label active">' . number_format($bw, 2) . ' GB</span>';
+	if (intval($bw) < $limit) return '<span class="label active">' . number_format($bw, 2) . ' GB</span>';
 	return '<span class="label terminated">' . number_format($bw, 2) . ' GB</span>';
 }
 
