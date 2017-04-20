@@ -165,10 +165,18 @@ function dcmgmt_clientarea($vars) {
 function get_bwusage($interface, $type = 'month', $nextduedate = null)
 {
 	if ($type == 'month') {
-		$day = date('d', $nextduedate);
-		$prev_month = date('m')-1;
-		$from = date('Y').'-'.$prev_month.'-'.$day;
-		$to = date('Y-m').'-'.$day;
+		$day = date('d', strtotime($nextduedate));
+		$month = date('m');
+		if($day < date('d')) {
+			$next_month = $month+1;
+			$from = date('Y').'-'.$month.'-'.$day;
+			$to = date('Y').'-'.$next_month.'-'.$day;
+		} else {
+			$prev_month = $month-1;
+			$from = date('Y').'-'.$prev_month.'-'.$day;
+			$to = date('Y').'-'.$month.'-'.$day;
+		}
+		// echo "get $interface ($nextduedate / $from - $to)<br>";
 		$traffic_result = Capsule::table('mod_dcmgmt_bandwidth_port')->select('id', 'rx', 'tx')->where('name', '=', $interface)->where('timestamp', '>=', $from)->where('timestamp', '<=', $to)->orderBy('id', 'asc')->get();
 	}
 	else {
