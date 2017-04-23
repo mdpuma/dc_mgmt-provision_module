@@ -406,10 +406,13 @@ function dcmgmt_TestConnection(array $params)
  *
  * @return array
  */
+/**
+ * commented due bug https://forum.whmcs.com/showthread.php?123470-After-upgrade-6-3-gt-7-1-wrong-server-shown-in-customer-product-details-tab&highlight=select+server
 function dcmgmt_AdminCustomButtonArray()
 {
 	return array();
 }
+**/
 
 /**
  * Additional actions a client user can invoke.
@@ -779,23 +782,7 @@ function dcmgmt_UsageUpdate($params) {
 	$results = '';
 	foreach($products_info as $product) {
 		// product['value'] is interface name
-		$last_month = array('rx'=>0, 'tx'=>0, 'total'=>0, 'days'=>0);
-		
-		$traffic_result = Capsule::table('mod_dcmgmt_bandwidth_port')
-		    ->select('id','rx','tx')
-		    ->where('name', '=', $product->value)
-		    ->where('timestamp', '<=', $product->nextduedate)
-		    ->where('timestamp', '>=', date('Y-m-d', strtotime($product->nextduedate)-3600*24*31))
-		    ->orderBy('id', 'asc')
-		    ->get();
-		
-		foreach($traffic_result as $i => $date) {
-			if(!isset($traffic_result[$i+1])) break;
-			$last_month['rx'] += $traffic_result[$i+1]->rx - $date->rx;
-			$last_month['tx'] += $traffic_result[$i+1]->tx - $date->tx;
-			$last_month['days']++;
-		}
-		$last_month['total'] = $last_month['rx'] + $last_month['tx'];
+		$last_month = get_bwusage($product->value, 'month', $product->nextduedate);
 		$results[$product->id] = round($last_month['total']/1024/1024, 2); # convert bytes to megabytes
 	}
 	
