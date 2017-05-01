@@ -101,8 +101,8 @@ EOF;
 			$products_info[$id]['domain'] = '(No domain)';
 		
 		$products_info[$id]['servername'] = $servers_name[$product['server']];
-		$products_info[$id]['bwusage_31d'] = get_bwusage($product['value'], '31d', null);
-		$products_info[$id]['bwusage_month'] = get_bwusage($product['value'], 'month', $product['nextduedate']);
+		$products_info[$id]['bwusage_31d'] = get_bwusage($product['server'], $product['value'], '31d', null);
+		$products_info[$id]['bwusage_month'] = get_bwusage($product['server'], $product['value'], 'month', $product['nextduedate']);
 		
 		if(empty($product['value']))
 			$products_info[$id]['value'] = '(not set)';
@@ -162,7 +162,7 @@ function dcmgmt_clientarea($vars) {
 }
 
 // type may be month or 31d for last 31 days
-function get_bwusage($interface, $type = 'month', $nextduedate = null)
+function get_bwusage($serverid, $interface, $type = 'month', $nextduedate = null)
 {
 	if ($type == 'month') {
 		$day = date('d', strtotime($nextduedate));
@@ -177,10 +177,10 @@ function get_bwusage($interface, $type = 'month', $nextduedate = null)
 			$to = date('Y').'-'.$month.'-'.$day;
 		}
 		// echo "get $interface ($nextduedate / $from - $to)<br>";
-		$traffic_result = Capsule::table('mod_dcmgmt_bandwidth_port')->select('id', 'rx', 'tx')->where('name', '=', $interface)->where('timestamp', '>=', $from)->where('timestamp', '<=', $to)->orderBy('id', 'asc')->get();
+		$traffic_result = Capsule::table('mod_dcmgmt_bandwidth_port')->select('id', 'rx', 'tx')->where('serverid', '=', $serverid)->where('name', '=', $interface)->where('timestamp', '>=', $from)->where('timestamp', '<=', $to)->orderBy('id', 'asc')->get();
 	}
 	else {
-		$traffic_result = Capsule::table('mod_dcmgmt_bandwidth_port')->select('id', 'rx', 'tx')->where('name', '=', $interface)->where('timestamp', '<=', date('Y-m-d'))->where('timestamp', '>=', date('Y-m-d', date('U') - 3600 * 24 * 31))->orderBy('id', 'asc')->get();
+		$traffic_result = Capsule::table('mod_dcmgmt_bandwidth_port')->select('id', 'rx', 'tx')->where('serverid', '=', $serverid)->where('name', '=', $interface)->where('timestamp', '<=', date('Y-m-d'))->where('timestamp', '>=', date('Y-m-d', date('U') - 3600 * 24 * 31))->orderBy('id', 'asc')->get();
 	}
 	foreach($traffic_result as $i => $date) {
 		if (!isset($traffic_result[$i + 1])) break;

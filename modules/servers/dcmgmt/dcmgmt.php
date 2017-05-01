@@ -450,7 +450,7 @@ function dcmgmt_AdminServicesTabFields(array $params)
 {
 	// $params['customfields']['interface']
 	// querying last 30 days
-	$results = get_bwusage($params['customfields']['interface'], '31d');
+	$results = get_bwusage($params['serverid'], $params['customfields']['interface'], '31d');
 	
 	$fieldsarray = array(
 		'Bandwidth Usage (last 30 days)' => 
@@ -761,7 +761,7 @@ function dcmgmt_UsageUpdate($params) {
 	  AND tblcustomfieldsvalues.fieldid = tblcustomfields.id
 	*/
 	$products_info = Capsule::table('tblcustomfieldsvalues')
-	    ->select('tblhosting.id', 'tblcustomfields.fieldname', 'tblcustomfieldsvalues.value', 'tblhosting.nextduedate')
+	    ->select('tblhosting.id', 'tblhosting.serverid', 'tblcustomfields.fieldname', 'tblcustomfieldsvalues.value', 'tblhosting.nextduedate')
 	    ->join('tblhosting', 'tblhosting.id', '=', 'tblcustomfieldsvalues.relid')
 	    ->join('tblcustomfields', 'tblcustomfields.id', '=', 'tblcustomfieldsvalues.fieldid')
 	    ->where('tblcustomfields.fieldname', '=', 'interface')
@@ -782,7 +782,7 @@ function dcmgmt_UsageUpdate($params) {
 	$results = '';
 	foreach($products_info as $product) {
 		// product['value'] is interface name
-		$last_month = get_bwusage($product->value, 'month', $product->nextduedate);
+		$last_month = get_bwusage($product->serverid, $product->value, 'month', $product->nextduedate);
 		$results[$product->id] = round($last_month['total']/1024/1024, 2); # convert bytes to megabytes
 	}
 	
