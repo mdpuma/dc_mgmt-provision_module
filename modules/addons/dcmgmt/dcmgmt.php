@@ -69,7 +69,7 @@ function dcmgmt_output($vars) {
         <th><a href="?module=dcmgmt&orderby=bwmonth">Bandwidth used this month</a></th>
         <th><a href="?module=dcmgmt&orderby=bw31d">Bandwidth used in last 30d</a></th>
         <th>Due date</th>
-        <th><a href="?module=dcmgmt&orderby=status">Status</a></th>
+        <th>Status</th>
     </tr>
 EOF;
 	
@@ -111,9 +111,9 @@ EOF;
 	if(isset($_GET['orderby'])) {
 		switch($_GET['orderby']) {
 			case 'id': usort($products_info, function($a, $b) {return $a['id'] - $b['id'];}); break;
-			case 'domain': usort($products_info, function($a, $b) {return $a['domain'] - $b['domain'];}); break;
-			case 'interface': usort($products_info, function($a, $b) {return $a['value'] - $b['value'];}); break;
-			case 'switch': usort($products_info, function($a, $b) {return $a['server'] - $b['server'];}); break;
+			case 'domain': usort($products_info, function($a, $b) {return strcmp($a['domain'], $b['domain']);}); break;
+			case 'interface': usort($products_info, function($a, $b) {return strcmp($a['value'], $b['value']);}); break;
+			case 'switch': usort($products_info, function($a, $b) {return strcmp($a['servername'], $b['servername']);}); break;
 			case 'bwmonth': usort($products_info, function($a, $b) {return $a['bwusage_month'] - $b['bwusage_month'];}); break;
 			case 'bw31d': usort($products_info, function($a, $b) {return $a['bwusage_31d'] - $b['bwusage_31d'];}); break;
 		}
