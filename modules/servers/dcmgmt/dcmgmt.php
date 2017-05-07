@@ -450,6 +450,7 @@ function dcmgmt_AdminServicesTabFields(array $params)
 {
 	// $params['customfields']['interface']
 	// querying last 30 days
+	// $params['serverid'] is equal to tblhosting.server
 	$results = get_bwusage($params['serverid'], $params['customfields']['interface'], '31d');
 	
 	$fieldsarray = array(
@@ -761,7 +762,7 @@ function dcmgmt_UsageUpdate($params) {
 	  AND tblcustomfieldsvalues.fieldid = tblcustomfields.id
 	*/
 	$products_info = Capsule::table('tblcustomfieldsvalues')
-	    ->select('tblhosting.id', 'tblhosting.serverid', 'tblcustomfields.fieldname', 'tblcustomfieldsvalues.value', 'tblhosting.nextduedate')
+	    ->select('tblhosting.id', 'tblhosting.server', 'tblcustomfields.fieldname', 'tblcustomfieldsvalues.value', 'tblhosting.nextduedate')
 	    ->join('tblhosting', 'tblhosting.id', '=', 'tblcustomfieldsvalues.relid')
 	    ->join('tblcustomfields', 'tblcustomfields.id', '=', 'tblcustomfieldsvalues.fieldid')
 	    ->where('tblcustomfields.fieldname', '=', 'interface')
@@ -782,7 +783,7 @@ function dcmgmt_UsageUpdate($params) {
 	$results = '';
 	foreach($products_info as $product) {
 		// product['value'] is interface name
-		$last_month = get_bwusage($product->serverid, $product->value, 'month', $product->nextduedate);
+		$last_month = get_bwusage($product->server, $product->value, 'month', $product->nextduedate);
 		$results[$product->id] = round($last_month['total']/1024/1024, 2); # convert bytes to megabytes
 	}
 	
@@ -806,14 +807,14 @@ function dcmgmt_UsageUpdate($params) {
 }
 
 function dcmgmt_formatSize($size) {
-	$mod = 1000;
+	$mod = 1024;
 	$units = explode(' ','B KB MB GB TB PB');
 	for ($i = 0; $size > $mod; $i++) {$size /= $mod;}
 	return round($size, 3) . ' ' . $units[$i];
 }
 
 function dcmgmt_formatSpeed($speed) {
-	$mod = 1000;
+	$mod = 1024;
 	$speed=$speed*8;
 	$units = explode(' ','bits Kbit Mbit Gbit');
 	for ($i = 0; $speed > $mod; $i++) {$speed /= $mod;}
@@ -821,7 +822,7 @@ function dcmgmt_formatSpeed($speed) {
 }
 
 // type may be month or 31d for last 31 days
-function get_bwusage($interface, $type = 'month', $nextduedate = null)
+function get_bwusage($serverid, $interface, $type = 'month', $nextduedate = null)
 {
 	if ($type == 'month') {
 		$day = date('d', strtotime($nextduedate));
@@ -835,10 +836,10 @@ function get_bwusage($interface, $type = 'month', $nextduedate = null)
 			$from = date('Y').'-'.$prev_month.'-'.$day;
 			$to = date('Y').'-'.$month.'-'.$day;
 		}
-		$traffic_result = Capsule::table('mod_dcmgmt_bandwidth_port')->select('id', 'rx', 'tx')->where('name', '=', $interface)->where('timestamp', '>=', $from)->where('timestamp', '<=', $to)->orderBy('id', 'asc')->get();
+		$traffic_result = Capsule::table('mod_dcmgmt_bandwidth_port')->select('id', 'rx', 'tx')->where('serverid', '=', $serverid)->where('name', '=', $interface)->where('timestamp', '>=', $from)->where('timestamp', '<=', $to)->orderBy('id', 'asc')->get();
 	}
 	else {
-		$traffic_result = Capsule::table('mod_dcmgmt_bandwidth_port')->select('id', 'rx', 'tx')->where('name', '=', $interface)->where('timestamp', '<=', date('Y-m-d'))->where('timestamp', '>=', date('Y-m-d', date('U') - 3600 * 24 * 31))->orderBy('id', 'asc')->get();
+		$traffic_result = Capsule::table('mod_dcmgmt_bandwidth_port')->select('id', 'rx', 'tx')->where('serverid', '=', $serverid)->where('name', '=', $interface)->where('timestamp', '<=', date('Y-m-d'))->where('timestamp', '>=', date('Y-m-d', date('U') - 3600 * 24 * 31))->orderBy('id', 'asc')->get();
 	}
 	foreach($traffic_result as $i => $date) {
 		if (!isset($traffic_result[$i + 1])) break;

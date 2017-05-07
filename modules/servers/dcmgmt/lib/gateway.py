@@ -7,6 +7,7 @@ class gateway:
     def __init__(self, routerip,username,password):
         self.hwtype = 'cisco'
         self.p = pexpect.spawn('telnet '+routerip)
+        self.p.logfile = open("/tmp/whmcs-dc_mgmt-gateway.log", "w")
         i = self.p.expect(['Username:', 'Press any key to continue'])
         if i==0:
             self.hwtype='cisco'
@@ -21,7 +22,7 @@ class gateway:
             self.p.expect_exact('Password:')
             self.p.sendline(password)
         
-        i=self.p.expect_exact(['>', '#', 'Authentication failed.', 'Invalid password'])
+        i=self.p.expect_exact(['>', '#', 'Authentication failed', 'Invalid password'])
         if i>=2:
             print "ERR: % Authentication failed."
             exit(1)
