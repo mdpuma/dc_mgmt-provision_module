@@ -140,7 +140,7 @@ function dcmgmt_SuspendAccount(array $params)
 	try {
 		// Call the service's suspend function, using the values provided by
 		// WHMCS in `$params`.
-		var_dump($params);
+// 		var_dump($params);
 		switch($params['configoption1']) {
 			case 'Null-route ip address': {
 				if(!preg_match("/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/", $params['customfields']['customerip'])) {
@@ -150,7 +150,7 @@ function dcmgmt_SuspendAccount(array $params)
 				break;
 			}
 			case 'Disable network port': {
-				if(!preg_match("/^(gi|vlan|vl)?(\/?\d+)+$/", $params['customfields']['interface'])) {
+				if(!preg_match("/^(gi|vlan|vl|tu|tun)?(\/?\d+)+$/", $params['customfields']['interface'])) {
 					throw new exception("ERROR: empty interface");
 				}
 				$output = shell_exec("python ".__DIR__."/lib/gateway.py --routerip=".$params['serverip']." --username=".$params['serverusername']." --password=".$params['serverpassword']." --action=suspend --type=shutdownport --interface=".$params['customfields']['interface']." 2>&1");
