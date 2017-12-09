@@ -48,7 +48,6 @@ function dcmgmt_deactivate() {
 }
 
 function dcmgmt_output($vars) {
- 
     $modulelink = $vars['modulelink'];
     $version = $vars['version'];
     $option1 = $vars['option1'];
@@ -58,6 +57,8 @@ function dcmgmt_output($vars) {
     $option5 = $vars['option5'];
     $option6 = $vars['option6'];
     $LANG = $vars['_lang'];
+ 
+//     $timestart = count_time_start();
  
     echo <<<EOF
 <table class="datatable" width="100%" border="0" cellspacing="1" cellpadding="3">
@@ -79,7 +80,6 @@ EOF;
 		$servers_name[$res->id] = $res->name;
 	}
 	
-	
 	$products_info = Capsule::table('tblcustomfieldsvalues')
 	    ->select('tblhosting.id', 'tblhosting.userid', 'tblhosting.domain', 'tblhosting.nextduedate', 'tblhosting.server', 'tblhosting.domainstatus', 'tblcustomfields.fieldname', 'tblcustomfieldsvalues.value', 'tblhosting.nextduedate')
 	    ->join('tblhosting', 'tblhosting.id', '=', 'tblcustomfieldsvalues.relid')
@@ -90,7 +90,7 @@ EOF;
 	    ->get();
 	
 	$products_info = objectToArray($products_info);
-	
+
 	foreach($products_info as $id => $product) {
 		if($product['domainstatus'] == 'Terminated' || $product['domainstatus'] == 'Cancelled') {
 			unset($products_info[$id]);
@@ -132,6 +132,7 @@ EOF;
 		</tr>';
 	}
 	echo '</table>';
+// 	count_time_end($timestart);
 }
 
 function dcmgmt_clientarea($vars) {
@@ -168,15 +169,13 @@ function get_bwusage($serverid, $interface, $type = 'month', $nextduedate = null
 		$day = date('d', strtotime($nextduedate));
 		$month = date('m');
 		if($day < date('d')) {
-			$next_month = $month+1;
-			$from = date('Y').'-'.$month.'-'.$day;
-			$to = date('Y').'-'.$next_month.'-'.$day;
+            $from = date('Y').'-'.$month.'-'.$day;
+            $to = date('Y-m-d', (strtotime($from)+3600*24*31));
 		} else {
-			$prev_month = $month-1;
-			$from = date('Y').'-'.$prev_month.'-'.$day;
 			$to = date('Y').'-'.$month.'-'.$day;
+			$from = date('Y-m-d', (strtotime($to)-3600*24*31));
 		}
-		// echo "get $interface ($nextduedate / $from - $to)<br>";
+// 		echo "get $interface ($nextduedate / $from - $to)<br>";
 		$traffic_result = Capsule::table('mod_dcmgmt_bandwidth_port')->select('id', 'rx', 'tx')->where('serverid', '=', $serverid)->where('name', '=', $interface)->where('timestamp', '>=', $from)->where('timestamp', '<=', $to)->orderBy('id', 'asc')->get();
 	}
 	else {
@@ -199,6 +198,21 @@ function print_bwusage($bw, $limit=5000)
 {
 	if (intval($bw) < $limit) return '<span class="label active">' . number_format($bw, 2) . ' GB</span>';
 	return '<span class="label terminated">' . number_format($bw, 2) . ' GB</span>';
+}
+
+function microtime_float() {
+    list($usec, $sec) = explode(" ", microtime());
+    return ((float)$usec + (float)$sec);
+}
+
+function count_time_start() {
+    return microtime_float();
+}
+
+function count_time_end($time_start) {
+    $time_end = microtime_float();
+    $time = $time_end - $time_start;
+    echo 'Did nothing in '.round($time,3)." seconds\n";
 }
 
 function objectToArray($d)
