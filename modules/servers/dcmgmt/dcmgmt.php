@@ -26,8 +26,7 @@ use WHMCS\Database\Capsule;
  *
  * @return array
  */
-function dcmgmt_MetaData()
-{
+function dcmgmt_MetaData() {
     return array(
         'DisplayName' => 'Datacenter Management',
         'APIVersion' => '1.1', // Use API Version 1.1
@@ -35,7 +34,7 @@ function dcmgmt_MetaData()
         'DefaultNonSSLPort' => '1111', // Default Non-SSL Connection Port
         'DefaultSSLPort' => '1112', // Default SSL Connection Port
         'ServiceSingleSignOnLabel' => 'Login to Panel as User',
-        'AdminSingleSignOnLabel' => 'Login to Panel as Admin',
+        'AdminSingleSignOnLabel' => 'Login to Panel as Admin'
     );
 }
 
@@ -60,15 +59,14 @@ function dcmgmt_MetaData()
  *
  * @return array
  */
-function dcmgmt_ConfigOptions()
-{
-	return array(
-		'Suspend type' => array(
-			'Type' => 'radio',
-			'Options' => 'Null-route ip address,Disable network port',
-			'Description' => 'What happens when customer service need to suspend:',
-		),
-	);
+function dcmgmt_ConfigOptions() {
+    return array(
+        'Suspend type' => array(
+            'Type' => 'radio',
+            'Options' => 'Null-route ip address,Disable network port',
+            'Description' => 'What happens when customer service need to suspend:'
+        )
+    );
 }
 
 /**
@@ -87,8 +85,7 @@ function dcmgmt_ConfigOptions()
  *
  * @return string "success" or an error message
  */
-function dcmgmt_CreateAccount(array $params)
-{
+function dcmgmt_CreateAccount(array $params) {
     try {
         // Call the service's provisioning function, using the values provided
         // by WHMCS in `$params`.
@@ -106,19 +103,14 @@ function dcmgmt_CreateAccount(array $params)
         //     ...
         // )
         // ```
-    } catch (Exception $e) {
+    }
+    catch (Exception $e) {
         // Record the error in WHMCS's module log.
-        logModuleCall(
-            'provisioningmodule',
-            __FUNCTION__,
-            $params,
-            $e->getMessage(),
-            $e->getTraceAsString()
-        );
-
+        logModuleCall('provisioningmodule', __FUNCTION__, $params, $e->getMessage(), $e->getTraceAsString());
+        
         return $e->getMessage();
     }
-
+    
     return 'success';
 }
 
@@ -135,43 +127,37 @@ function dcmgmt_CreateAccount(array $params)
  *
  * @return string "success" or an error message
  */
-function dcmgmt_SuspendAccount(array $params)
-{
-	try {
-		// Call the service's suspend function, using the values provided by
-		// WHMCS in `$params`.
-// 		var_dump($params);
-		switch($params['configoption1']) {
-			case 'Null-route ip address': {
-				if(!preg_match("/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/", $params['customfields']['customerip'])) {
-					throw new exception("ERROR: empty customerip");
-				}
-				$output = shell_exec("python ".__DIR__."/lib/gateway.py --routerip=".$params['serverip']." --username=".$params['serverusername']." --password=".$params['serverpassword']." --action=suspend --type=nullroute --customerip=".$params['customfields']['customerip']." 2>&1");
-				break;
-			}
-			case 'Disable network port': {
-				if(!preg_match("/^(gi|vlan|vl|tu|tun)?(\/?\d+)+$/", $params['customfields']['interface'])) {
-					throw new exception("ERROR: empty interface");
-				}
-				$output = shell_exec("python ".__DIR__."/lib/gateway.py --routerip=".$params['serverip']." --username=".$params['serverusername']." --password=".$params['serverpassword']." --action=suspend --type=shutdownport --interface=".$params['customfields']['interface']." 2>&1");
-				break;
-			}
-		}
-		if(!preg_match("/OK/", $output)) {
-			throw new exception("ERROR from backend: $output");
-		}
-	} catch (Exception $e) {
-		// Record the error in WHMCS's module log.
-		logModuleCall(
-			'provisioningmodule',
-			__FUNCTION__,
-			$params,
-			$e->getMessage(),
-			$e->getTraceAsString()
-		);
-		return $e->getMessage();
-	}
-	return 'success';
+function dcmgmt_SuspendAccount(array $params) {
+    try {
+        // Call the service's suspend function, using the values provided by
+        // WHMCS in `$params`.
+        //      var_dump($params);
+        switch ($params['configoption1']) {
+            case 'Null-route ip address': {
+                if (!preg_match("/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/", $params['customfields']['customerip'])) {
+                    throw new exception("ERROR: empty customerip");
+                }
+                $output = shell_exec("python " . __DIR__ . "/lib/gateway.py --routerip=" . $params['serverip'] . " --username=" . $params['serverusername'] . " --password=" . $params['serverpassword'] . " --action=suspend --type=nullroute --customerip=" . $params['customfields']['customerip'] . " 2>&1");
+                break;
+            }
+            case 'Disable network port': {
+                if (!preg_match("/^(gi|vlan|vl|tu|tun)?(\/?\d+)+$/", $params['customfields']['interface'])) {
+                    throw new exception("ERROR: empty interface");
+                }
+                $output = shell_exec("python " . __DIR__ . "/lib/gateway.py --routerip=" . $params['serverip'] . " --username=" . $params['serverusername'] . " --password=" . $params['serverpassword'] . " --action=suspend --type=shutdownport --interface=" . $params['customfields']['interface'] . " 2>&1");
+                break;
+            }
+        }
+        if (!preg_match("/OK/", $output)) {
+            throw new exception("ERROR from backend: $output");
+        }
+    }
+    catch (Exception $e) {
+        // Record the error in WHMCS's module log.
+        logModuleCall('provisioningmodule', __FUNCTION__, $params, $e->getMessage(), $e->getTraceAsString());
+        return $e->getMessage();
+    }
+    return 'success';
 }
 
 /**
@@ -187,43 +173,37 @@ function dcmgmt_SuspendAccount(array $params)
  *
  * @return string "success" or an error message
  */
-function dcmgmt_UnsuspendAccount(array $params)
-{
-	try {
-		// Call the service's unsuspend function, using the values provided by
-		// WHMCS in `$params`.
-		var_dump($params);
-		switch($params['configoption1']) {
-			case 'Null-route ip address': {
-				if(!preg_match("/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/", $params['customfields']['customerip'])) {
-					throw new exception("ERROR: empty customerip");
-				}
-				$output = shell_exec("python ".__DIR__."/lib/gateway.py --routerip=".$params['serverip']." --username=".$params['serverusername']." --password=".$params['serverpassword']." --action=unsuspend --type=nullroute --customerip=".$params['customfields']['customerip']." 2>&1");
-				break;
-			}
-			case 'Disable network port': {
-				if(!preg_match("/^(gi|vlan|vl|tu|tun)?(\/?\d+)+$/", $params['customfields']['interface'])) {
-					throw new exception("ERROR: empty interface");
-				}
-				$output = shell_exec("python ".__DIR__."/lib/gateway.py --routerip=".$params['serverip']." --username=".$params['serverusername']." --password=".$params['serverpassword']." --action=unsuspend --type=shutdownport --interface=".$params['customfields']['interface']." 2>&1");
-				break;
-			}
-		}
-		if(!preg_match("/OK/", $output)) {
-			throw new exception("ERROR from backend: $output");
-		}
-	} catch (Exception $e) {
-		// Record the error in WHMCS's module log.
-		logModuleCall(
-			'provisioningmodule',
-			__FUNCTION__,
-			$params,
-			$e->getMessage(),
-			$e->getTraceAsString()
-		);
-		return $e->getMessage();
-	}
-	return 'success';
+function dcmgmt_UnsuspendAccount(array $params) {
+    try {
+        // Call the service's unsuspend function, using the values provided by
+        // WHMCS in `$params`.
+        var_dump($params);
+        switch ($params['configoption1']) {
+            case 'Null-route ip address': {
+                if (!preg_match("/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/", $params['customfields']['customerip'])) {
+                    throw new exception("ERROR: empty customerip");
+                }
+                $output = shell_exec("python " . __DIR__ . "/lib/gateway.py --routerip=" . $params['serverip'] . " --username=" . $params['serverusername'] . " --password=" . $params['serverpassword'] . " --action=unsuspend --type=nullroute --customerip=" . $params['customfields']['customerip'] . " 2>&1");
+                break;
+            }
+            case 'Disable network port': {
+                if (!preg_match("/^(gi|vlan|vl|tu|tun)?(\/?\d+)+$/", $params['customfields']['interface'])) {
+                    throw new exception("ERROR: empty interface");
+                }
+                $output = shell_exec("python " . __DIR__ . "/lib/gateway.py --routerip=" . $params['serverip'] . " --username=" . $params['serverusername'] . " --password=" . $params['serverpassword'] . " --action=unsuspend --type=shutdownport --interface=" . $params['customfields']['interface'] . " 2>&1");
+                break;
+            }
+        }
+        if (!preg_match("/OK/", $output)) {
+            throw new exception("ERROR from backend: $output");
+        }
+    }
+    catch (Exception $e) {
+        // Record the error in WHMCS's module log.
+        logModuleCall('provisioningmodule', __FUNCTION__, $params, $e->getMessage(), $e->getTraceAsString());
+        return $e->getMessage();
+    }
+    return 'success';
 }
 
 /**
@@ -238,24 +218,18 @@ function dcmgmt_UnsuspendAccount(array $params)
  *
  * @return string "success" or an error message
  */
-function dcmgmt_TerminateAccount(array $params)
-{
+function dcmgmt_TerminateAccount(array $params) {
     try {
         // Call the service's terminate function, using the values provided by
         // WHMCS in `$params`.
-    } catch (Exception $e) {
+    }
+    catch (Exception $e) {
         // Record the error in WHMCS's module log.
-        logModuleCall(
-            'provisioningmodule',
-            __FUNCTION__,
-            $params,
-            $e->getMessage(),
-            $e->getTraceAsString()
-        );
-
+        logModuleCall('provisioningmodule', __FUNCTION__, $params, $e->getMessage(), $e->getTraceAsString());
+        
         return $e->getMessage();
     }
-
+    
     return 'success';
 }
 
@@ -275,8 +249,7 @@ function dcmgmt_TerminateAccount(array $params)
  *
  * @return string "success" or an error message
  */
-function dcmgmt_ChangePassword(array $params)
-{
+function dcmgmt_ChangePassword(array $params) {
     try {
         // Call the service's change password function, using the values
         // provided by WHMCS in `$params`.
@@ -289,19 +262,14 @@ function dcmgmt_ChangePassword(array $params)
         //     'password' => 'The new service password',
         // )
         // ```
-    } catch (Exception $e) {
+    }
+    catch (Exception $e) {
         // Record the error in WHMCS's module log.
-        logModuleCall(
-            'provisioningmodule',
-            __FUNCTION__,
-            $params,
-            $e->getMessage(),
-            $e->getTraceAsString()
-        );
-
+        logModuleCall('provisioningmodule', __FUNCTION__, $params, $e->getMessage(), $e->getTraceAsString());
+        
         return $e->getMessage();
     }
-
+    
     return 'success';
 }
 
@@ -321,8 +289,7 @@ function dcmgmt_ChangePassword(array $params)
  *
  * @return string "success" or an error message
  */
-function dcmgmt_ChangePackage(array $params)
-{
+function dcmgmt_ChangePackage(array $params) {
     try {
         // Call the service's change password function, using the values
         // provided by WHMCS in `$params`.
@@ -336,19 +303,14 @@ function dcmgmt_ChangePackage(array $params)
         //     'configoption3' => 'Whether or not to enable FTP',
         // )
         // ```
-    } catch (Exception $e) {
+    }
+    catch (Exception $e) {
         // Record the error in WHMCS's module log.
-        logModuleCall(
-            'provisioningmodule',
-            __FUNCTION__,
-            $params,
-            $e->getMessage(),
-            $e->getTraceAsString()
-        );
-
+        logModuleCall('provisioningmodule', __FUNCTION__, $params, $e->getMessage(), $e->getTraceAsString());
+        
         return $e->getMessage();
     }
-
+    
     return 'success';
 }
 
@@ -369,30 +331,24 @@ function dcmgmt_ChangePackage(array $params)
  *
  * @return array
  */
-function dcmgmt_TestConnection(array $params)
-{
+function dcmgmt_TestConnection(array $params) {
     try {
         // Call the service's connection test function.
-
-        $success = true;
+        
+        $success  = true;
         $errorMsg = '';
-    } catch (Exception $e) {
+    }
+    catch (Exception $e) {
         // Record the error in WHMCS's module log.
-        logModuleCall(
-            'provisioningmodule',
-            __FUNCTION__,
-            $params,
-            $e->getMessage(),
-            $e->getTraceAsString()
-        );
-
-        $success = false;
+        logModuleCall('provisioningmodule', __FUNCTION__, $params, $e->getMessage(), $e->getTraceAsString());
+        
+        $success  = false;
         $errorMsg = $e->getMessage();
     }
-
+    
     return array(
         'success' => $success,
-        'error' => $errorMsg,
+        'error' => $errorMsg
     );
 }
 
@@ -408,11 +364,11 @@ function dcmgmt_TestConnection(array $params)
  */
 /**
  * commented due bug https://forum.whmcs.com/showthread.php?123470-After-upgrade-6-3-gt-7-1-wrong-server-shown-in-customer-product-details-tab&highlight=select+server
-function dcmgmt_AdminCustomButtonArray()
-{
-	return array();
-}
-**/
+ function dcmgmt_AdminCustomButtonArray()
+ {
+ return array();
+ }
+ **/
 
 /**
  * Additional actions a client user can invoke.
@@ -425,8 +381,7 @@ function dcmgmt_AdminCustomButtonArray()
  *
  * @return array
  */
-function dcmgmt_ClientAreaCustomButtonArray()
-{
+function dcmgmt_ClientAreaCustomButtonArray() {
     return array();
 }
 
@@ -446,24 +401,18 @@ function dcmgmt_ClientAreaCustomButtonArray()
  *
  * @return array
  */
-function dcmgmt_AdminServicesTabFields(array $params)
-{
-	// $params['customfields']['interface']
-	// querying last 30 days
-	// $params['serverid'] is equal to tblhosting.server
-	$results = get_bwusage($params['serverid'], $params['customfields']['interface'], '31d');
-	
-	$fieldsarray = array(
-		'Bandwidth Usage (last 30 days)' => 
-			"Received: ".dcmgmt_formatSize($results['rx'])."<br>".
-			"Sent: ".dcmgmt_formatSize($results['tx'])."<br>".
-			"Total: ".dcmgmt_formatSize($results['total'])."<br>",
-		'Average Speed (last 30 days)' => 
-			"Receiving: ".dcmgmt_formatSpeed($results['rx']/(24*$results['days']*3600))."<br>".
-			"Sending: ".dcmgmt_formatSpeed($results['tx']/(24*$results['days']*3600))."<br>",
-	);
-	return $fieldsarray;
-	//return array();
+function dcmgmt_AdminServicesTabFields(array $params) {
+    // $params['customfields']['interface']
+    // querying last 30 days
+    // $params['serverid'] is equal to tblhosting.server
+    $results = get_bwusage($params['serverid'], $params['customfields']['interface'], '31d');
+    
+    $fieldsarray = array(
+        'Bandwidth Usage (last 30 days)' => "Received: " . dcmgmt_formatSize($results['rx']) . "<br>" . "Sent: " . dcmgmt_formatSize($results['tx']) . "<br>" . "Total: " . dcmgmt_formatSize($results['total']) . "<br>",
+        'Average Speed (last 30 days)' => "Receiving: " . dcmgmt_formatSpeed($results['rx'] / (24 * $results['days'] * 3600)) . "<br>" . "Sending: " . dcmgmt_formatSpeed($results['tx'] / (24 * $results['days'] * 3600)) . "<br>"
+    );
+    return $fieldsarray;
+    //return array();
 }
 
 /**
@@ -480,32 +429,22 @@ function dcmgmt_AdminServicesTabFields(array $params)
  * @see http://docs.whmcs.com/Provisioning_Module_SDK_Parameters
  * @see provisioningmodule_AdminServicesTabFields()
  */
-function dcmgmt_AdminServicesTabFieldsSave(array $params)
-{
+function dcmgmt_AdminServicesTabFieldsSave(array $params) {
     // Fetch form submission variables.
-    $originalFieldValue = isset($_REQUEST['provisioningmodule_original_uniquefieldname'])
-        ? $_REQUEST['provisioningmodule_original_uniquefieldname']
-        : '';
-
-    $newFieldValue = isset($_REQUEST['provisioningmodule_uniquefieldname'])
-        ? $_REQUEST['provisioningmodule_uniquefieldname']
-        : '';
-
+    $originalFieldValue = isset($_REQUEST['provisioningmodule_original_uniquefieldname']) ? $_REQUEST['provisioningmodule_original_uniquefieldname'] : '';
+    
+    $newFieldValue = isset($_REQUEST['provisioningmodule_uniquefieldname']) ? $_REQUEST['provisioningmodule_uniquefieldname'] : '';
+    
     // Look for a change in value to avoid making unnecessary service calls.
     if ($originalFieldValue != $newFieldValue) {
         try {
             // Call the service's function, using the values provided by WHMCS
             // in `$params`.
-        } catch (Exception $e) {
+        }
+        catch (Exception $e) {
             // Record the error in WHMCS's module log.
-            logModuleCall(
-                'provisioningmodule',
-                __FUNCTION__,
-                $params,
-                $e->getMessage(),
-                $e->getTraceAsString()
-            );
-
+            logModuleCall('provisioningmodule', __FUNCTION__, $params, $e->getMessage(), $e->getTraceAsString());
+            
             // Otherwise, error conditions are not supported in this operation.
         }
     }
@@ -524,30 +463,24 @@ function dcmgmt_AdminServicesTabFieldsSave(array $params)
  *
  * @return array
  */
-function dcmgmt_ServiceSingleSignOn(array $params)
-{
+function dcmgmt_ServiceSingleSignOn(array $params) {
     try {
         // Call the service's single sign-on token retrieval function, using the
         // values provided by WHMCS in `$params`.
         $response = array();
-
+        
         return array(
             'success' => true,
-            'redirectTo' => $response['redirectUrl'],
+            'redirectTo' => $response['redirectUrl']
         );
-    } catch (Exception $e) {
+    }
+    catch (Exception $e) {
         // Record the error in WHMCS's module log.
-        logModuleCall(
-            'provisioningmodule',
-            __FUNCTION__,
-            $params,
-            $e->getMessage(),
-            $e->getTraceAsString()
-        );
-
+        logModuleCall('provisioningmodule', __FUNCTION__, $params, $e->getMessage(), $e->getTraceAsString());
+        
         return array(
             'success' => false,
-            'errorMsg' => $e->getMessage(),
+            'errorMsg' => $e->getMessage()
         );
     }
 }
@@ -569,30 +502,24 @@ function dcmgmt_ServiceSingleSignOn(array $params)
  *
  * @return array
  */
-function dcmgmt_AdminSingleSignOn(array $params)
-{
+function dcmgmt_AdminSingleSignOn(array $params) {
     try {
         // Call the service's single sign-on admin token retrieval function,
         // using the values provided by WHMCS in `$params`.
         $response = array();
-
+        
         return array(
             'success' => true,
-            'redirectTo' => $response['redirectUrl'],
+            'redirectTo' => $response['redirectUrl']
         );
-    } catch (Exception $e) {
+    }
+    catch (Exception $e) {
         // Record the error in WHMCS's module log.
-        logModuleCall(
-            'provisioningmodule',
-            __FUNCTION__,
-            $params,
-            $e->getMessage(),
-            $e->getTraceAsString()
-        );
-
+        logModuleCall('provisioningmodule', __FUNCTION__, $params, $e->getMessage(), $e->getTraceAsString());
+        
         return array(
             'success' => false,
-            'errorMsg' => $e->getMessage(),
+            'errorMsg' => $e->getMessage()
         );
     }
 }
@@ -627,226 +554,224 @@ function dcmgmt_AdminSingleSignOn(array $params)
  *
  * @return array
  */
-function dcmgmt_ClientArea(array $params)
-{
+function dcmgmt_ClientArea(array $params) {
     // Determine the requested action and set service call parameters based on
     // the action.
     /*
     $requestedAction = isset($_REQUEST['customAction']) ? $_REQUEST['customAction'] : '';
-
+    
     if ($requestedAction == 'manage') {
-        $serviceAction = 'get_usage';
-        $templateFile = 'templates/manage.tpl';
+    $serviceAction = 'get_usage';
+    $templateFile = 'templates/manage.tpl';
     } else {
-        $serviceAction = 'get_stats';
-        $templateFile = 'templates/overview.tpl';
+    $serviceAction = 'get_stats';
+    $templateFile = 'templates/overview.tpl';
     }
-
+    
     try {
-        // Call the service's function based on the request action, using the
-        // values provided by WHMCS in `$params`.
-        $response = array();
-
-        $extraVariable1 = 'abc';
-        $extraVariable2 = '123';
-
-        return array(
-            'tabOverviewReplacementTemplate' => $templateFile,
-            'templateVariables' => array(
-                'extraVariable1' => $extraVariable1,
-                'extraVariable2' => $extraVariable2,
-            ),
-        );
+    // Call the service's function based on the request action, using the
+    // values provided by WHMCS in `$params`.
+    $response = array();
+    
+    $extraVariable1 = 'abc';
+    $extraVariable2 = '123';
+    
+    return array(
+    'tabOverviewReplacementTemplate' => $templateFile,
+    'templateVariables' => array(
+    'extraVariable1' => $extraVariable1,
+    'extraVariable2' => $extraVariable2,
+    ),
+    );
     } catch (Exception $e) {
-        // Record the error in WHMCS's module log.
-        logModuleCall(
-            'provisioningmodule',
-            __FUNCTION__,
-            $params,
-            $e->getMessage(),
-            $e->getTraceAsString()
-        );
-
-        // In an error condition, display an error page.
-        return array(
-            'tabOverviewReplacementTemplate' => 'error.tpl',
-            'templateVariables' => array(
-                'usefulErrorHelper' => $e->getMessage(),
-            ),
-        );
+    // Record the error in WHMCS's module log.
+    logModuleCall(
+    'provisioningmodule',
+    __FUNCTION__,
+    $params,
+    $e->getMessage(),
+    $e->getTraceAsString()
+    );
+    
+    // In an error condition, display an error page.
+    return array(
+    'tabOverviewReplacementTemplate' => 'error.tpl',
+    'templateVariables' => array(
+    'usefulErrorHelper' => $e->getMessage(),
+    ),
+    );
     }
     */
 }
 
 function dcmgmt_UsageUpdate($params) {
-	$serverid = $params['serverid'];
-	$serverhostname = $params['serverhostname'];
-	$serverip = $params['serverip'];
-	$serverusername = $params['serverusername'];
-	$serverpassword = $params['serverpassword'];
-	$serveraccesshash = $params['serveraccesshash'];
-	$serversecure = $params['serversecure'];
-	
-	$serveraccesshash = simplexml_load_string($serveraccesshash);
-	
-	if(!isset($serveraccesshash->community))
-		$serveraccesshash->community = 'public';
-		
-	if(!isset($serveraccesshash->snmpver))
-		$serveraccesshash->snmpver = '2c';
-	
-	# Run connection to retrieve usage for all domains/accounts on $serverid
-	// get interface names with index
-	$interfaces = '';
-	$output = shell_exec('snmpwalk -v'.$serveraccesshash->snmpver.' -c '.$serveraccesshash->community.' -m IF-MIB '.$serverip.' IF-MIB::ifName');
-	$lines = explode("\n", $output);
-	foreach($lines as $line) {
-		# IF-MIB::ifName.1 = STRING: Gi1/1
-		preg_match('/^IF-MIB::ifName.(\d+) = STRING: (.*)$/', $line, $matches);
-		if(preg_match('/^(Gi|Vl|Po|Tu|\d+)/', $matches[2])) {
-			$interfaces[$matches[1]]['name'] = strtolower($matches[2]);
-		}
-	}
-	
-	// get incoming bytes
-	$output = shell_exec('snmpwalk -v'.$serveraccesshash->snmpver.' -c '.$serveraccesshash->community.' -m IF-MIB '.$serverip.' IF-MIB::ifHCInOctets');
-	$lines = explode("\n", $output);
-	foreach($lines as $line) {
-		# IF-MIB::ifHCInOctets.182 = Counter64: 1469416807863
-		preg_match('/^IF-MIB::ifHCInOctets.(\d+) = Counter64: (.*)$/', $line, $matches);
-		if(isset($interfaces[$matches[1]])) {
-			$interfaces[$matches[1]]['rx'] = $matches[2];
-		}
-	}
-	
-	// get outgoing bytes
-	$output = shell_exec('snmpwalk -v'.$serveraccesshash->snmpver.' -c '.$serveraccesshash->community.' -m IF-MIB '.$serverip.' IF-MIB::ifHCOutOctets');
-	$lines = explode("\n", $output);
-	foreach($lines as $line) {
-		# IF-MIB::ifHCOutOctets.182 = Counter64: 1469416807863
-		preg_match('/^IF-MIB::ifHCOutOctets.(\d+) = Counter64: (.*)$/', $line, $matches);
-		if(isset($interfaces[$matches[1]])) {
-			$interfaces[$matches[1]]['tx'] = $matches[2];
-		}
-	}
-	
-	$pdo = Capsule::connection()->getPdo();
-	$pdo->beginTransaction();
-	
-	try {
-		$stmt = $pdo->prepare('insert into `mod_dcmgmt_bandwidth_port` (serverid, timestamp, name, rx, tx) values (:serverid, NOW(), :name, :rx, :tx)');
-		
-		foreach($interfaces as $id => $data) {
-			$stmt->execute([
-				':serverid' => $serverid,
-				':name'     => $data['name'],
-				':rx'       => $data['rx'],
-				':tx'       => $data['tx'],
-			]);
-		}
-		$pdo->commit();
-	} catch (\Exception $e) {
-	    echo "Error happen! Rollback transactions {$e->getMessage()}";
-	    $pdo->rollBack();
-	}
-	
-	# Now loop through results and update DB
-	/*
-	  get productid, fieldname, interface, nextduedate 
-	  
-	  SELECT tblhosting.id, tblcustomfields.fieldname, tblcustomfieldsvalues.value, tblhosting.nextduedate
-	  FROM tblhosting, tblcustomfields, tblcustomfieldsvalues
-	  WHERE tblcustomfields.fieldname = 'interface'
-	  AND tblcustomfieldsvalues.value != ''
-	  AND tblhosting.id = tblcustomfieldsvalues.relid
-	  AND tblcustomfieldsvalues.fieldid = tblcustomfields.id
-	*/
-	$products_info = Capsule::table('tblcustomfieldsvalues')
-	    ->select('tblhosting.id', 'tblhosting.server', 'tblcustomfields.fieldname', 'tblcustomfieldsvalues.value', 'tblhosting.nextduedate')
-	    ->join('tblhosting', 'tblhosting.id', '=', 'tblcustomfieldsvalues.relid')
-	    ->join('tblcustomfields', 'tblcustomfields.id', '=', 'tblcustomfieldsvalues.fieldid')
-	    ->where('tblcustomfields.fieldname', '=', 'interface')
-	    ->where('tblcustomfieldsvalues.value', '!=', NULL)
-	    ->get();
-	
-	// check all products and calculate used Bandwidth
-	/*
-	   example get bandwidth stats from 2017-03-10 - 2017-04-10(argument)
-	    SELECT id, rx, tx, timestamp
-	    FROM `mod_dcmgmt_bandwidth_port`
-	    WHERE name = 'gi7/38'
-	    AND timestamp <= '2017-04-10'
-	    AND timestamp >= ( '2017-04-10' - INTERVAL 30
-	    DAY )
-	    ORDER BY id ASC 
-	*/
-	$results = '';
-	foreach($products_info as $product) {
-		// product['value'] is interface name
-		$last_month = get_bwusage($product->server, $product->value, 'month', $product->nextduedate);
-		$results[$product->id] = round($last_month['total']/1024/1024, 2); # convert bytes to megabytes
-	}
-	
-	/* disk and bw units is MB */
-	$pdo->beginTransaction();
-	try {
-		$stmt = $pdo->prepare('update `tblhosting` set diskusage=0, disklimit=0, bwusage=:bwusage, bwlimit=:bwlimit, lastupdate=now() where id=:productid');
-		
-		foreach($results as $productid => $bwused) {
-			$stmt->execute([
-				':productid' => $productid,
-				':bwusage'   => $bwused,
-				':bwlimit'   => 5*1024*1024,
-			]);
-		}
-		$pdo->commit();
-	} catch (\Exception $e) {
-	    echo "Error happen! Rollback transactions {$e->getMessage()}";
-	    $pdo->rollBack();
-	}
+    $serverid         = $params['serverid'];
+    $serverhostname   = $params['serverhostname'];
+    $serverip         = $params['serverip'];
+    $serverusername   = $params['serverusername'];
+    $serverpassword   = $params['serverpassword'];
+    $serveraccesshash = $params['serveraccesshash'];
+    $serversecure     = $params['serversecure'];
+    
+    $serveraccesshash = simplexml_load_string($serveraccesshash);
+    
+    if (!isset($serveraccesshash->community))
+        $serveraccesshash->community = 'public';
+    
+    if (!isset($serveraccesshash->snmpver))
+        $serveraccesshash->snmpver = '2c';
+    
+    # Run connection to retrieve usage for all domains/accounts on $serverid
+    // get interface names with index
+    $interfaces = '';
+    $output     = shell_exec('snmpwalk -v' . $serveraccesshash->snmpver . ' -c ' . $serveraccesshash->community . ' -m IF-MIB ' . $serverip . ' IF-MIB::ifName');
+    $lines      = explode("\n", $output);
+    foreach ($lines as $line) {
+        # IF-MIB::ifName.1 = STRING: Gi1/1
+        preg_match('/^IF-MIB::ifName.(\d+) = STRING: (.*)$/', $line, $matches);
+        if (preg_match('/^(Gi|Vl|Po|Tu|\d+)/', $matches[2])) {
+            $interfaces[$matches[1]]['name'] = strtolower($matches[2]);
+        }
+    }
+    
+    // get incoming bytes
+    $output = shell_exec('snmpwalk -v' . $serveraccesshash->snmpver . ' -c ' . $serveraccesshash->community . ' -m IF-MIB ' . $serverip . ' IF-MIB::ifHCInOctets');
+    $lines  = explode("\n", $output);
+    foreach ($lines as $line) {
+        # IF-MIB::ifHCInOctets.182 = Counter64: 1469416807863
+        preg_match('/^IF-MIB::ifHCInOctets.(\d+) = Counter64: (.*)$/', $line, $matches);
+        if (isset($interfaces[$matches[1]])) {
+            $interfaces[$matches[1]]['rx'] = $matches[2];
+        }
+    }
+    
+    // get outgoing bytes
+    $output = shell_exec('snmpwalk -v' . $serveraccesshash->snmpver . ' -c ' . $serveraccesshash->community . ' -m IF-MIB ' . $serverip . ' IF-MIB::ifHCOutOctets');
+    $lines  = explode("\n", $output);
+    foreach ($lines as $line) {
+        # IF-MIB::ifHCOutOctets.182 = Counter64: 1469416807863
+        preg_match('/^IF-MIB::ifHCOutOctets.(\d+) = Counter64: (.*)$/', $line, $matches);
+        if (isset($interfaces[$matches[1]])) {
+            $interfaces[$matches[1]]['tx'] = $matches[2];
+        }
+    }
+    
+    $pdo = Capsule::connection()->getPdo();
+    $pdo->beginTransaction();
+    
+    try {
+        $stmt = $pdo->prepare('insert into `mod_dcmgmt_bandwidth_port` (serverid, timestamp, name, rx, tx) values (:serverid, NOW(), :name, :rx, :tx)');
+        
+        foreach ($interfaces as $id => $data) {
+            $stmt->execute(array(
+                ':serverid' => $serverid,
+                ':name' => $data['name'],
+                ':rx' => $data['rx'],
+                ':tx' => $data['tx']
+            ));
+        }
+        $pdo->commit();
+    }
+    catch (\Exception $e) {
+        echo "Error happen! Rollback transactions {$e->getMessage()}";
+        $pdo->rollBack();
+    }
+    
+    # Now loop through results and update DB
+    /*
+    get productid, fieldname, interface, nextduedate 
+    
+    SELECT tblhosting.id, tblcustomfields.fieldname, tblcustomfieldsvalues.value, tblhosting.nextduedate
+    FROM tblhosting, tblcustomfields, tblcustomfieldsvalues
+    WHERE tblcustomfields.fieldname = 'interface'
+    AND tblcustomfieldsvalues.value != ''
+    AND tblhosting.id = tblcustomfieldsvalues.relid
+    AND tblcustomfieldsvalues.fieldid = tblcustomfields.id
+    */
+    $products_info = Capsule::table('tblcustomfieldsvalues')->select('tblhosting.id', 'tblhosting.server', 'tblcustomfields.fieldname', 'tblcustomfieldsvalues.value', 'tblhosting.nextduedate')->join('tblhosting', 'tblhosting.id', '=', 'tblcustomfieldsvalues.relid')->join('tblcustomfields', 'tblcustomfields.id', '=', 'tblcustomfieldsvalues.fieldid')->where('tblcustomfields.fieldname', '=', 'interface')->where('tblcustomfieldsvalues.value', '!=', NULL)->get();
+    
+    // check all products and calculate used Bandwidth
+    /*
+    example get bandwidth stats from 2017-03-10 - 2017-04-10(argument)
+    SELECT id, rx, tx, timestamp
+    FROM `mod_dcmgmt_bandwidth_port`
+    WHERE name = 'gi7/38'
+    AND timestamp <= '2017-04-10'
+    AND timestamp >= ( '2017-04-10' - INTERVAL 30
+    DAY )
+    ORDER BY id ASC 
+    */
+    $results = '';
+    foreach ($products_info as $product) {
+        // product['value'] is interface name
+        $last_month            = get_bwusage($product->server, $product->value, 'month', $product->nextduedate);
+        $results[$product->id] = round($last_month['total'] / 1024 / 1024, 2); # convert bytes to megabytes
+    }
+    
+    /* disk and bw units is MB */
+    $pdo->beginTransaction();
+    try {
+        $stmt = $pdo->prepare('update `tblhosting` set diskusage=0, disklimit=0, bwusage=:bwusage, bwlimit=:bwlimit, lastupdate=now() where id=:productid');
+        
+        foreach ($results as $productid => $bwused) {
+            $stmt->execute(array(
+                ':productid' => $productid,
+                ':bwusage' => $bwused,
+                ':bwlimit' => 5 * 1024 * 1024
+            ));
+        }
+        $pdo->commit();
+    }
+    catch (\Exception $e) {
+        echo "Error happen! Rollback transactions {$e->getMessage()}";
+        $pdo->rollBack();
+    }
 }
 
 function dcmgmt_formatSize($size) {
-	$mod = 1024;
-	$units = explode(' ','B KB MB GB TB PB');
-	for ($i = 0; $size > $mod; $i++) {$size /= $mod;}
-	return round($size, 3) . ' ' . $units[$i];
+    $mod   = 1024;
+    $units = explode(' ', 'B KB MB GB TB PB');
+    for ($i = 0; $size > $mod; $i++) {
+        $size /= $mod;
+    }
+    return round($size, 3) . ' ' . $units[$i];
 }
 
 function dcmgmt_formatSpeed($speed) {
-	$mod = 1024;
-	$speed=$speed*8;
-	$units = explode(' ','bits Kbit Mbit Gbit');
-	for ($i = 0; $speed > $mod; $i++) {$speed /= $mod;}
-	return round($speed, 3) . ' ' . $units[$i];
+    $mod   = 1024;
+    $speed = $speed * 8;
+    $units = explode(' ', 'bits Kbit Mbit Gbit');
+    for ($i = 0; $speed > $mod; $i++) {
+        $speed /= $mod;
+    }
+    return round($speed, 3) . ' ' . $units[$i];
 }
 
 // type may be month or 31d for last 31 days
-function get_bwusage($serverid, $interface, $type = 'month', $nextduedate = null)
-{
-	if ($type == 'month') {
-		$day = date('d', strtotime($nextduedate));
-		$month = date('m');
-		if ($day < date('d')) {
+function get_bwusage($serverid, $interface, $type = 'month', $nextduedate = null) {
+    if ($type == 'month') {
+        $day   = date('d', strtotime($nextduedate));
+        $month = date('m');
+        if ($day < date('d')) {
             $from = date('Y') . '-' . $month . '-' . $day;
             $to   = date('Y-m-d', (strtotime($from) + 3600 * 24 * 31));
         } else {
             $to   = date('Y') . '-' . $month . '-' . $day;
             $from = date('Y-m-d', (strtotime($to) - 3600 * 24 * 31));
         }
-		$traffic_result = Capsule::table('mod_dcmgmt_bandwidth_port')->select('id', 'rx', 'tx')->where('serverid', '=', $serverid)->where('name', '=', $interface)->where('timestamp', '>=', $from)->where('timestamp', '<=', $to)->orderBy('id', 'asc')->get();
-	}
-	else {
-		$traffic_result = Capsule::table('mod_dcmgmt_bandwidth_port')->select('id', 'rx', 'tx')->where('serverid', '=', $serverid)->where('name', '=', $interface)->where('timestamp', '<=', date('Y-m-d'))->where('timestamp', '>=', date('Y-m-d', date('U') - 3600 * 24 * 31))->orderBy('id', 'asc')->get();
-	}
-	foreach($traffic_result as $i => $date) {
-		if (!isset($traffic_result[$i + 1])) break;
-		if ($traffic_result[$i + 1]->rx >= $traffic_result[$i]->rx) {
-			$last_month['rx']+= $traffic_result[$i + 1]->rx - $date->rx;
-			$last_month['tx']+= $traffic_result[$i + 1]->tx - $date->tx;
-		}
-		$last_month['days']++;
-	}
-	$last_month['total'] = $last_month['rx'] + $last_month['tx'];
-	return $last_month;
+        $traffic_result = Capsule::table('mod_dcmgmt_bandwidth_port')->select('id', 'rx', 'tx')->where('serverid', '=', $serverid)->where('name', '=', $interface)->where('timestamp', '>=', $from)->where('timestamp', '<=', $to)->orderBy('id', 'asc')->get();
+    } else {
+        $traffic_result = Capsule::table('mod_dcmgmt_bandwidth_port')->select('id', 'rx', 'tx')->where('serverid', '=', $serverid)->where('name', '=', $interface)->where('timestamp', '<=', date('Y-m-d'))->where('timestamp', '>=', date('Y-m-d', date('U') - 3600 * 24 * 31))->orderBy('id', 'asc')->get();
+    }
+    foreach ($traffic_result as $i => $date) {
+        if (!isset($traffic_result[$i + 1]))
+            break;
+        if ($traffic_result[$i + 1]->rx >= $traffic_result[$i]->rx) {
+            $last_month['rx'] += $traffic_result[$i + 1]->rx - $date->rx;
+            $last_month['tx'] += $traffic_result[$i + 1]->tx - $date->tx;
+        }
+        $last_month['days']++;
+    }
+    $last_month['total'] = $last_month['rx'] + $last_month['tx'];
+    return $last_month;
 }
