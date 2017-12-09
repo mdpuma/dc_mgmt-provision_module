@@ -827,15 +827,13 @@ function get_bwusage($serverid, $interface, $type = 'month', $nextduedate = null
 	if ($type == 'month') {
 		$day = date('d', strtotime($nextduedate));
 		$month = date('m');
-		if($day < date('d')) {
-			$next_month = $month+1;
-			$from = date('Y').'-'.$month.'-'.$day;
-			$to = date('Y').'-'.$next_month.'-'.$day;
-		} else {
-			$prev_month = $month-1;
-			$from = date('Y').'-'.$prev_month.'-'.$day;
-			$to = date('Y').'-'.$month.'-'.$day;
-		}
+		if ($day < date('d')) {
+            $from = date('Y') . '-' . $month . '-' . $day;
+            $to   = date('Y-m-d', (strtotime($from) + 3600 * 24 * 31));
+        } else {
+            $to   = date('Y') . '-' . $month . '-' . $day;
+            $from = date('Y-m-d', (strtotime($to) - 3600 * 24 * 31));
+        }
 		$traffic_result = Capsule::table('mod_dcmgmt_bandwidth_port')->select('id', 'rx', 'tx')->where('serverid', '=', $serverid)->where('name', '=', $interface)->where('timestamp', '>=', $from)->where('timestamp', '<=', $to)->orderBy('id', 'asc')->get();
 	}
 	else {
