@@ -1,11 +1,5 @@
 <?php
 
-/*
-
-Release 1
-
-*/
-
 use WHMCS\Database\Capsule;
 
 //Do not run this file without WHMCS
@@ -15,8 +9,8 @@ function dcmgmt_config() {
     $configarray = array(
         "name" => "Datacenter management module",
         "description" => "This addon is allow to do some datacenter like functions for dedicated/colocation services.",
-        "version" => "0.1",
-        "author" => "<a href='https://github.com/mdpuma'>mdpuma@github.com</a>",
+        "version" => "0.2",
+        "author" => "",
         "fields" => array()
     );
     return $configarray;
@@ -24,6 +18,7 @@ function dcmgmt_config() {
 
 function dcmgmt_activate() {
     # Create Custom DB Table
+    Capsule::statement('drop table users');
     $query = "CREATE TABLE `mod_dcmgmt_bandwidth_port` (
           `id` int(11) NOT NULL AUTO_INCREMENT,
           `serverid` int(11) NOT NULL,
@@ -33,7 +28,8 @@ function dcmgmt_activate() {
           `tx` bigint(20) unsigned NOT NULL DEFAULT '0',
           PRIMARY KEY (`id`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8;";
-    mysql_query($query);
+    Capsule::statement($query);
+    Capsule::statement("ALTER TABLE `mod_dcmgmt_bandwidth_port` ADD INDEX `serverid` (`serverid`, `name`, `timestamp`);");
     
     # Return Result
     return array(
@@ -44,7 +40,7 @@ function dcmgmt_activate() {
 function dcmgmt_deactivate() {
     # Remove Custom DB Table
     $query = "TRUNCATE TABLE `mod_dcmgmt_bandwidth_port`";
-    mysql_query($query);
+    Capsule::statement($query);
     
     # Return Result
     return array(
@@ -63,21 +59,37 @@ function dcmgmt_output($vars) {
     $option6    = $vars['option6'];
     $LANG       = $vars['_lang'];
     
-    //     $timestart = count_time_start();
-    
-    echo <<<EOF
-<table class="datatable" width="100%" border="0" cellspacing="1" cellpadding="3">
-    <tr>
-        <th><a href="?module=dcmgmt&orderby=id">Product ID</a></th>
-        <th><a href="?module=dcmgmt&orderby=domain">Domain (Product/Service)</a></th>
-        <th><a href="?module=dcmgmt&orderby=interface">Interface</a></th>
-        <th><a href="?module=dcmgmt&orderby=switch">Switch</a></th>
-        <th><a href="?module=dcmgmt&orderby=bwmonth">Bandwidth used this month</a></th>
-        <th><a href="?module=dcmgmt&orderby=bw31d">Bandwidth used in last 30d</a></th>
-        <th>Due date</th>
-        <th>Status</th>
-    </tr>
+	echo <<<EOF
+<div class="lic_linksbar"><a href="addonmodules.php?module=dcmgmt&amp;page=bandwidth">Bandwidth</a> | <a class="thickbox" href="addonmodules.php?module=dcmgmt&amp;page=electricity">Electricity</a></div>
+    <div id="main">
 EOF;
+	if(!isset($_GET['page'])) $_GET['page'] = 'bandwidth';
+	switch($_GET['page']) {
+		case 'bandwidth':
+			show_bandwidth_table();
+			break;
+		case 'electricity':
+			show_electricity_table();
+			break;
+	}
+    echo '</div>';
+}
+
+function show_bandwidth_table() {
+	echo <<<EOF
+	<table class="datatable" width="100%" border="0" cellspacing="1" cellpadding="3">
+		<tr>
+			<th><a href="?module=dcmgmt&amp;page=bandwidth&amp;orderby=id">Product ID</a></th>
+			<th><a href="?module=dcmgmt&amp;page=bandwidth&amp;orderby=domain">Domain (Product/Service)</a></th>
+			<th><a href="?module=dcmgmt&amp;page=bandwidth&amp;orderby=interface">Interface</a></th>
+			<th><a href="?module=dcmgmt&amp;page=bandwidth&amp;orderby=switch">Switch</a></th>
+			<th><a href="?module=dcmgmt&amp;page=bandwidth&amp;orderby=bwmonth">Bandwidth used this month</a></th>
+			<th><a href="?module=dcmgmt&amp;page=bandwidth&amp;orderby=bw31d">Bandwidth used in last 30d</a></th>
+			<th><a href="?module=dcmgmt&amp;page=bandwidth&amp;orderby=duedate">Due date</a></th>
+			<th><a href="?module=dcmgmt&amp;page=bandwidth&amp;orderby=status">Status</a></th>
+		</tr>
+EOF;
+    
     
     $servers_name = '';
     $result       = Capsule::table('tblservers')->select('id', 'name')->where('type', '=', 'dcmgmt ')->get();
@@ -90,7 +102,7 @@ EOF;
     $products_info = objectToArray($products_info);
     
     foreach ($products_info as $id => $product) {
-        if ($product['domainstatus'] == 'Terminated' || $product['domainstatus'] == 'Cancelled') {
+        if ( !( $product['domainstatus'] == 'Active' || $product['domainstatus'] == 'Suspended' ) && empty($product['value'])) {
             unset($products_info[$id]);
             continue;
         }
@@ -130,14 +142,19 @@ EOF;
                 break;
             case 'bwmonth':
                 usort($products_info, function($a, $b) {
-                    return $a['bwusage_month'] - $b['bwusage_month'];
+                    return $a['bwusage_month']['bytes'] - $b['bwusage_month']['bytes'];
                 });
                 break;
             case 'bw31d':
                 usort($products_info, function($a, $b) {
-                    return $a['bwusage_31d'] - $b['bwusage_31d'];
+                    return $a['bwusage_31d']['bytes'] - $b['bwusage_31d']['bytes'];
                 });
                 break;
+            case 'status':
+				usort($products_info, function($a, $b) {
+					return strcmp($a['domainstatus'], $b['domainstatus']);
+				});
+				break;
         }
     }
     
@@ -147,14 +164,103 @@ EOF;
             <td><a href="clientsservices.php?userid=' . $product['userid'] . '&id=' . $product['id'] . '">' . $product['domain'] . '</a></td>
             <td>' . $product['value'] . '</td>
             <td>' . $product['servername'] . '</td>
-            <td style="text-align: right">' . print_bwusage($product['bwusage_month']) . '</td>
-            <td style="text-align: right">' . print_bwusage($product['bwusage_31d']) . '</td>
+            <td style="text-align: right">'.$product['bwusage_month']['from'].'-'.$product['bwusage_month']['to'].' ' . print_bwusage($product['bwusage_month']['bytes']) . '</td>
+            <td style="text-align: right">' . print_bwusage($product['bwusage_31d']['bytes']) . '</td>
             <td>' . $product['nextduedate'] . '</td>
             <td>' . $product['domainstatus'] . '</td>
         </tr>';
     }
     echo '</table>';
-    //  count_time_end($timestart);
+}
+
+function show_electricity_table() {
+	echo <<<EOF
+	<table class="datatable" width="100%" border="0" cellspacing="1" cellpadding="3">
+		<tr>
+			<th><a href="?module=dcmgmt&amp;page=electricity&amp;orderby=id">Product ID</a></th>
+			<th><a href="?module=dcmgmt&amp;page=electricity&amp;orderby=domain">Domain (Product/Service)</a></th>
+			<th><a href="?module=dcmgmt&amp;page=electricity&amp;orderby=interface">Interface</a></th>
+			<th><a href="?module=dcmgmt&amp;page=electricity&amp;orderby=socket">Power Socket</a></th>
+			<th><a href="?module=dcmgmt&amp;page=electricity&amp;orderby=electricity">Average Wh Use</a></th>
+			<th><a href="?module=dcmgmt&amp;page=electricity&amp;orderby=duedate">Due date</a></th>
+			<th><a href="?module=dcmgmt&amp;page=electricity&amp;orderby=status">Status</a></th>
+		</tr>
+EOF;
+    
+    
+    $servers_name = '';
+    $result       = Capsule::table('tblservers')->select('id', 'name')->where('type', '=', 'dcmgmt ')->get();
+    foreach ($result as $res) {
+        $servers_name[$res->id] = $res->name;
+    }
+    
+    // 242
+    $result = Capsule::table('tblproductconfigoptions')->select('id')->where('optionname','=','Average Wh Use')->get()[0];
+    $option_id = objectToArray($result);
+    
+    $result = Capsule::table('tblhostingconfigoptions')->select('tblhosting.id', 'tblhosting.userid', 'tblhosting.domain', 'tblhosting.nextduedate', 'tblhosting.server', 'tblhosting.domainstatus', 'tblhostingconfigoptions.qty', 'tblhosting.nextduedate')->join('tblhosting', 'tblhosting.id', '=', 'tblhostingconfigoptions.relid')->where('tblhostingconfigoptions.configid', '=', $option_id)->orderby('tblhosting.nextduedate', 'asc')->get();
+    
+    $products_info = objectToArray($result);
+    
+    foreach ($products_info as $id => $product) {
+        if ( !( $product['domainstatus'] == 'Active' || $product['domainstatus'] == 'Suspended' ) && empty($product['qty'])) {
+            unset($products_info[$id]);
+            continue;
+        }
+        
+        if (empty($product['domain']))
+            $products_info[$id]['domain'] = '(No domain)';
+        
+        $products_info[$id]['servername']    = $servers_name[$product['server']];
+        
+        if (empty($product['qty']))
+            $products_info[$id]['qty'] = '(not set)';
+        else
+			$products_info[$id]['qty'] = $product['qty'].' Watts';
+    }
+    
+    if (isset($_GET['orderby'])) {
+        switch ($_GET['orderby']) {
+            case 'id':
+                usort($products_info, function($a, $b) {
+                    return $a['id'] - $b['id'];
+                });
+                break;
+            case 'domain':
+                usort($products_info, function($a, $b) {
+                    return strcmp($a['domain'], $b['domain']);
+                });
+                break;
+            case 'socket':
+                usort($products_info, function($a, $b) {
+                    return strcmp($a['value'], $b['value']);
+                });
+                break;
+            case 'electricity':
+                usort($products_info, function($a, $b) {
+                    return $a['qty'] - $b['qty'];
+                });
+                break;
+            case 'status':
+				usort($products_info, function($a, $b) {
+					return strcmp($a['domainstatus'], $b['domainstatus']);
+				});
+				break;
+        }
+    }
+    
+    foreach ($products_info as $product) {
+        echo '<tr>
+            <td><a href="clientsservices.php?userid=' . $product['userid'] . '&id=' . $product['id'] . '">' . $product['id'] . '</a></td>
+            <td><a href="clientsservices.php?userid=' . $product['userid'] . '&id=' . $product['id'] . '">' . $product['domain'] . '</a></td>
+            <td>-</td>
+            <td>' . $product['servername'] . '</td>
+            <td style="text-align: right">'.$product['qty'].'</td>
+            <td>' . $product['nextduedate'] . '</td>
+            <td>' . $product['domainstatus'] . '</td>
+        </tr>';
+    }
+    echo '</table>';
 }
 
 function dcmgmt_clientarea($vars) {
@@ -214,7 +320,11 @@ function get_bwusage($serverid, $interface, $type = 'month', $nextduedate = null
     }
     $last_month['total'] = $last_month['rx'] + $last_month['tx'];
     $results             = round($last_month['total'] / 1024 / 1024 / 1024, 2); // convert bytes to gigabytes
-    return $results;
+    return array(
+		'bytes' => $results,
+		'from' => $from,
+		'to' => $to,
+	);
 }
 
 function print_bwusage($bw, $limit = 5000) {
@@ -222,22 +332,6 @@ function print_bwusage($bw, $limit = 5000) {
         return '<span class="label active">' . number_format($bw, 2) . ' GB</span>';
     return '<span class="label terminated">' . number_format($bw, 2) . ' GB</span>';
 }
-
-function microtime_float() {
-    list($usec, $sec) = explode(" ", microtime());
-    return ((float) $usec + (float) $sec);
-}
-
-function count_time_start() {
-    return microtime_float();
-}
-
-function count_time_end($time_start) {
-    $time_end = microtime_float();
-    $time     = $time_end - $time_start;
-    echo 'Did nothing in ' . round($time, 3) . " seconds\n";
-}
-
 function objectToArray($d) {
     if (is_object($d)) {
         // Gets the properties of the given object
