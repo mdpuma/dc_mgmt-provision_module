@@ -26,6 +26,10 @@ use WHMCS\Database\Capsule;
  *
  * @return array
  */
+ 
+define("IP_REGEX", "/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/");
+define("INTERFACE_REGEX", "/^(gi|fa|vlan|vl|tu|tun)?(\/?\d+)+$/");
+
 function dcmgmt_MetaData() {
     return array(
         'DisplayName' => 'Datacenter Management',
@@ -134,14 +138,14 @@ function dcmgmt_SuspendAccount(array $params) {
         //      var_dump($params);
         switch ($params['configoption1']) {
             case 'Null-route ip address': {
-                if (!preg_match("/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/", $params['customfields']['customerip'])) {
+                if (!preg_match(IP_REGEX, $params['customfields']['customerip'])) {
                     throw new exception("ERROR: empty customerip");
                 }
                 $output = shell_exec("python " . __DIR__ . "/lib/gateway.py --routerip=" . $params['serverip'] . " --username=" . $params['serverusername'] . " --password=" . $params['serverpassword'] . " --action=suspend --type=nullroute --customerip=" . $params['customfields']['customerip'] . " 2>&1");
                 break;
             }
             case 'Disable network port': {
-                if (!preg_match("/^(gi|vlan|vl|tu|tun)?(\/?\d+)+$/", $params['customfields']['interface'])) {
+                if (!preg_match(INTERFACE_REGEX, $params['customfields']['interface'])) {
                     throw new exception("ERROR: empty interface");
                 }
                 $output = shell_exec("python " . __DIR__ . "/lib/gateway.py --routerip=" . $params['serverip'] . " --username=" . $params['serverusername'] . " --password=" . $params['serverpassword'] . " --action=suspend --type=shutdownport --interface=" . $params['customfields']['interface'] . " 2>&1");
@@ -180,14 +184,14 @@ function dcmgmt_UnsuspendAccount(array $params) {
         var_dump($params);
         switch ($params['configoption1']) {
             case 'Null-route ip address': {
-                if (!preg_match("/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/", $params['customfields']['customerip'])) {
+                if (!preg_match(IP_REGEX, $params['customfields']['customerip'])) {
                     throw new exception("ERROR: empty customerip");
                 }
                 $output = shell_exec("python " . __DIR__ . "/lib/gateway.py --routerip=" . $params['serverip'] . " --username=" . $params['serverusername'] . " --password=" . $params['serverpassword'] . " --action=unsuspend --type=nullroute --customerip=" . $params['customfields']['customerip'] . " 2>&1");
                 break;
             }
             case 'Disable network port': {
-                if (!preg_match("/^(gi|vlan|vl|tu|tun)?(\/?\d+)+$/", $params['customfields']['interface'])) {
+                if (!preg_match(INTERFACE_REGEX, $params['customfields']['interface'])) {
                     throw new exception("ERROR: empty interface");
                 }
                 $output = shell_exec("python " . __DIR__ . "/lib/gateway.py --routerip=" . $params['serverip'] . " --username=" . $params['serverusername'] . " --password=" . $params['serverpassword'] . " --action=unsuspend --type=shutdownport --interface=" . $params['customfields']['interface'] . " 2>&1");
