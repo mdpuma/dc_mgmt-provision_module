@@ -36,22 +36,22 @@
  *
  * @return mixed Return dependant upon hook function
  */
-function hook_provisioningmodule_clientedit(array $params)
-{
-    try {
-        // Call the service's function, using the values provided by WHMCS in
-        // `$params`.
-    } catch (Exception $e) {
-        // Consider logging or reporting the error.
-    }
-}
-
-/**
- * Register a hook with WHMCS.
- *
- * add_hook(string $hookPointName, int $priority, string|array|Closure $function)
- */
-add_hook('ClientEdit', 1, 'hook_provisioningmodule_clientedit');
+// function hook_provisioningmodule_clientedit(array $params)
+// {
+//     try {
+//         // Call the service's function, using the values provided by WHMCS in
+//         // `$params`.
+//     } catch (Exception $e) {
+//         // Consider logging or reporting the error.
+//     }
+// }
+// 
+// /**
+//  * Register a hook with WHMCS.
+//  *
+//  * add_hook(string $hookPointName, int $priority, string|array|Closure $function)
+//  */
+// add_hook('ClientEdit', 1, 'hook_provisioningmodule_clientedit');
 
 /**
  * Insert a service item to the client area navigation bar.
@@ -62,21 +62,21 @@ add_hook('ClientEdit', 1, 'hook_provisioningmodule_clientedit');
  *
  * @param \WHMCS\View\Menu\Item $menu
  */
-add_hook('ClientAreaPrimaryNavbar', 1, function ($menu)
-{
-    // Check whether the services menu exists.
-    if (!is_null($menu->getChild('Services'))) {
-        // Add a link to the module filter.
-        $menu->getChild('Services')
-            ->addChild(
-                'Provisioning Module Products',
-                array(
-                    'uri' => 'clientarea.php?action=services&module=provisioningmodule',
-                    'order' => 15,
-                )
-            );
-    }
-});
+// add_hook('ClientAreaPrimaryNavbar', 1, function ($menu)
+// {
+//     // Check whether the services menu exists.
+//     if (!is_null($menu->getChild('Services'))) {
+//         // Add a link to the module filter.
+//         $menu->getChild('Services')
+//             ->addChild(
+//                 'Provisioning Module Products',
+//                 array(
+//                     'uri' => 'clientarea.php?action=services&module=provisioningmodule',
+//                     'order' => 15,
+//                 )
+//             );
+//     }
+// });
 
 /**
  * Render a custom sidebar panel in the secondary sidebar.
@@ -88,33 +88,33 @@ add_hook('ClientAreaPrimaryNavbar', 1, function ($menu)
  *
  * @param \WHMCS\View\Menu\Item $secondarySidebar
  */
-add_hook('ClientAreaSecondarySidebar', 1, function ($secondarySidebar)
-{
-    // determine if we are on a page containing My Services Actions
-    if (!is_null($secondarySidebar->getChild('My Services Actions'))) {
-
-        // define new sidebar panel
-        $customPanel = $secondarySidebar->addChild('Provisioning Module Sample Panel');
-
-        // set panel attributes
-        $customPanel->moveToFront()
-            ->setIcon('fa-user')
-            ->setBodyHtml(
-                'Your HTML output goes here...'
-            )
-            ->setFooterHtml(
-                'Footer HTML can go here...'
-            );
-
-        // define link
-        $customPanel->addChild(
-                'Sample Link Menu Item',
-                array(
-                    'uri' => 'clientarea.php?action=services&module=provisioningmodule',
-                    'icon'  => 'fa-list-alt',
-                    'order' => 2,
-                )
-            );
-
-    }
-});
+// add_hook('ClientAreaSecondarySidebar', 1, function ($secondarySidebar)
+// {
+//     // determine if we are on a page containing My Services Actions
+//     if (!is_null($secondarySidebar->getChild('My Services Actions'))) {
+// 
+//         // define new sidebar panel
+//         $customPanel = $secondarySidebar->addChild('Provisioning Module Sample Panel');
+// 
+//         // set panel attributes
+//         $customPanel->moveToFront()
+//             ->setIcon('fa-user')
+//             ->setBodyHtml(
+//                 'Your HTML output goes here...'
+//             )
+//             ->setFooterHtml(
+//                 'Footer HTML can go here...'
+//             );
+// 
+//         // define link
+//         $customPanel->addChild(
+//                 'Sample Link Menu Item',
+//                 array(
+//                     'uri' => 'clientarea.php?action=services&module=provisioningmodule',
+//                     'icon'  => 'fa-list-alt',
+//                     'order' => 2,
+//                 )
+//             );
+// 
+//     }
+// });
