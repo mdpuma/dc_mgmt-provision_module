@@ -627,7 +627,7 @@ function dcmgmt_UsageUpdate($params) {
     
     # Run connection to retrieve usage for all domains/accounts on $serverid
     // get interface names with index
-    $interfaces = '';
+    $interfaces = [];
     $output     = shell_exec('snmpwalk -v' . $serveraccesshash->snmpver . ' -c ' . $serveraccesshash->community . ' -m IF-MIB ' . $serverip . ' IF-MIB::ifName');
     $lines      = explode("\n", $output);
     foreach ($lines as $line) {
