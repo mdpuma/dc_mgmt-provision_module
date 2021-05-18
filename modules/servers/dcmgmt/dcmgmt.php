@@ -135,7 +135,6 @@ function dcmgmt_SuspendAccount(array $params) {
     try {
         // Call the service's suspend function, using the values provided by
         // WHMCS in `$params`.
-        //      var_dump($params);
         switch ($params['configoption1']) {
             case 'Null-route ip address': {
                 if (!preg_match(IP_REGEX, $params['customfields']['customerip'])) {
@@ -181,7 +180,6 @@ function dcmgmt_UnsuspendAccount(array $params) {
     try {
         // Call the service's unsuspend function, using the values provided by
         // WHMCS in `$params`.
-        var_dump($params);
         switch ($params['configoption1']) {
             case 'Null-route ip address': {
                 if (!preg_match(IP_REGEX, $params['customfields']['customerip'])) {
@@ -667,6 +665,9 @@ function dcmgmt_UsageUpdate($params) {
         $stmt = $pdo->prepare('insert into `mod_dcmgmt_bandwidth_port` (serverid, timestamp, name, rx, tx) values (:serverid, NOW(), :name, :rx, :tx)');
         
         foreach ($interfaces as $id => $data) {
+            if($data['tx'] !== null) 
+                continue;
+            
             $stmt->execute(array(
                 ':serverid' => $serverid,
                 ':name' => $data['name'],
