@@ -617,6 +617,10 @@ function dcmgmt_UsageUpdate($params) {
     
     $serveraccesshash = simplexml_load_string($serveraccesshash);
     
+    if($serverip==null || empty($serverip)) {
+        return;
+    }
+    
     if (!isset($serveraccesshash->community))
         $serveraccesshash->community = 'public';
     
@@ -657,7 +661,6 @@ function dcmgmt_UsageUpdate($params) {
             $interfaces[$matches[1]]['tx'] = $matches[2];
         }
     }
-    
     $pdo = Capsule::connection()->getPdo();
     $pdo->beginTransaction();
     
@@ -665,7 +668,7 @@ function dcmgmt_UsageUpdate($params) {
         $stmt = $pdo->prepare('insert into `mod_dcmgmt_bandwidth_port` (serverid, timestamp, name, rx, tx) values (:serverid, NOW(), :name, :rx, :tx)');
         
         foreach ($interfaces as $id => $data) {
-            if($data['tx'] !== null) 
+            if(!isset($data['tx']) || $data['tx'] !== null)
                 continue;
             
             $stmt->execute(array(
