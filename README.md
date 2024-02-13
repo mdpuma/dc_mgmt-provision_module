@@ -4,11 +4,11 @@ Datacenter management module
 
 ## Minimum Requirements ##
 
-	python-pexpect
-	python-argparse
 	telnet
 	net-snmp
 	net-snmp-utils
+	python3-pexpect
+	python3-argparse
 
 ## Functions ##
 
