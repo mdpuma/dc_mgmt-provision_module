@@ -403,7 +403,7 @@ function dcmgmt_ClientAreaCustomButtonArray() {
  *
  * @return array
  */
-function dcmgmt_AdminServicesTabFields(array $params) {
+/*function dcmgmt_AdminServicesTabFields(array $params) {
     // $params['customfields']['interface']
     // querying last 30 days
     // $params['serverid'] is equal to tblhosting.server
@@ -415,7 +415,7 @@ function dcmgmt_AdminServicesTabFields(array $params) {
     );
     return $fieldsarray;
     //return array();
-}
+}*/
 
 /**
  * Execute actions upon save of an instance of a product/service.
@@ -606,6 +606,7 @@ function dcmgmt_ClientArea(array $params) {
     */
 }
 
+/*
 function dcmgmt_UsageUpdate($params) {
     $serverid         = $params['serverid'];
     $serverhostname   = $params['serverhostname'];
@@ -686,29 +687,9 @@ function dcmgmt_UsageUpdate($params) {
     }
     
     # Now loop through results and update DB
-    /*
-    get productid, fieldname, interface, nextduedate 
-    
-    SELECT tblhosting.id, tblcustomfields.fieldname, tblcustomfieldsvalues.value, tblhosting.nextduedate
-    FROM tblhosting, tblcustomfields, tblcustomfieldsvalues
-    WHERE tblcustomfields.fieldname = 'interface'
-    AND tblcustomfieldsvalues.value != ''
-    AND tblhosting.id = tblcustomfieldsvalues.relid
-    AND tblcustomfieldsvalues.fieldid = tblcustomfields.id
-    */
     $products_info = Capsule::table('tblcustomfieldsvalues')->select('tblhosting.id', 'tblhosting.server', 'tblcustomfields.fieldname', 'tblcustomfieldsvalues.value', 'tblhosting.nextduedate')->join('tblhosting', 'tblhosting.id', '=', 'tblcustomfieldsvalues.relid')->join('tblcustomfields', 'tblcustomfields.id', '=', 'tblcustomfieldsvalues.fieldid')->where('tblcustomfields.fieldname', '=', 'interface')->where('tblcustomfieldsvalues.value', '!=', NULL)->get();
     
     // check all products and calculate used Bandwidth
-    /*
-    example get bandwidth stats from 2017-03-10 - 2017-04-10(argument)
-    SELECT id, rx, tx, timestamp
-    FROM `mod_dcmgmt_bandwidth_port`
-    WHERE name = 'gi7/38'
-    AND timestamp <= '2017-04-10'
-    AND timestamp >= ( '2017-04-10' - INTERVAL 30
-    DAY )
-    ORDER BY id ASC 
-    */
     $results = '';
     foreach ($products_info as $product) {
         // product['value'] is interface name
@@ -716,7 +697,7 @@ function dcmgmt_UsageUpdate($params) {
         $results[$product->id] = round($last_month['total'] / 1024 / 1024, 2); # convert bytes to megabytes
     }
     
-    /* disk and bw units is MB */
+    // disk and bw units is MB
     $pdo->beginTransaction();
     try {
         $stmt = $pdo->prepare('update `tblhosting` set diskusage=0, disklimit=0, bwusage=:bwusage, bwlimit=:bwlimit, lastupdate=now() where id=:productid');
@@ -735,6 +716,7 @@ function dcmgmt_UsageUpdate($params) {
         $pdo->rollBack();
     }
 }
+*/
 
 function dcmgmt_formatSize($size) {
     $mod   = 1024;
