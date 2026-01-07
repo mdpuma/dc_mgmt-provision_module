@@ -1,0 +1,5 @@
+<?php
+
+$url = 'https://localhost/includes/api.php';
+$identifier = '';
+$secret = '';
