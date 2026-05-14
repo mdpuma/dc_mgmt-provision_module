@@ -3,3 +3,5 @@
 $url = 'https://localhost/includes/api.php';
 $identifier = '';
 $secret = '';
+
+$prometheus_uri = 'http://127.0.0.1:9090';
